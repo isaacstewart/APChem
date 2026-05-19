@@ -1,0 +1,3569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mole Quest: The Stoichiometry Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1530;
+  --paper: #fef9f3;
+  --shadow: rgba(26, 21, 48, 0.25);
+  --z1: #22c55e;
+  --z2: #3b82f6;
+  --z3: #ef4444;
+  --z4: #a855f7;
+  --z5: #f97316;
+  --gold: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { overflow: hidden; }
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, #fef3c7 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, #dbeafe 0%, transparent 50%),
+    linear-gradient(135deg, #fef9f3 0%, #f3f4f6 100%);
+  font-family: 'Fredoka', system-ui, sans-serif;
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  user-select: none;
+}
+
+/* Subtle animated background grid */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(26,21,48,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,21,48,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: drift 60s linear infinite;
+  pointer-events: none; z-index: 0;
+}
+@keyframes drift {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(40px, 40px); }
+}
+
+#game {
+  width: 100%; max-width: 1000px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============ SCREEN SHAKE ============ */
+.shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shake {
+  10%, 90% { transform: translate(-2px, 1px); }
+  20%, 80% { transform: translate(3px, -2px); }
+  30%, 50%, 70% { transform: translate(-5px, 2px); }
+  40%, 60% { transform: translate(5px, -1px); }
+}
+.shake-big { animation: shakeBig 0.6s cubic-bezier(.36,.07,.19,.97); }
+@keyframes shakeBig {
+  10%, 90% { transform: translate(-3px, 2px) rotate(-0.5deg); }
+  20%, 80% { transform: translate(5px, -3px) rotate(0.5deg); }
+  30%, 50%, 70% { transform: translate(-9px, 4px) rotate(-0.8deg); }
+  40%, 60% { transform: translate(9px, -2px) rotate(0.8deg); }
+}
+
+/* ============ SCREENS ============ */
+#map-screen, #battle-screen, #win-screen, #boss-room-screen { display: none; }
+#title-screen { display: flex; }
+
+/* ============ TITLE SCREEN ============ */
+#title-screen {
+  flex-direction: column; align-items: center; justify-content: center;
+  min-height: 640px; gap: 22px; padding: 40px;
+  background: linear-gradient(180deg, #fef9f3 0%, #fff 100%);
+  border-radius: 28px;
+  border: 4px solid var(--ink);
+  box-shadow:
+    0 0 0 4px var(--paper),
+    0 0 0 8px var(--ink),
+    0 12px 0 0 var(--ink),
+    0 20px 60px rgba(26,21,48,0.3);
+  position: relative;
+  overflow: hidden;
+}
+#title-screen::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(168,85,247,0.08), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(34,197,94,0.08), transparent 40%);
+  pointer-events: none;
+}
+.title-logo-wrap {
+  position: relative; width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  animation: bobFloat 3s ease-in-out infinite;
+}
+@keyframes bobFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+.title-logo-wrap::after {
+  content: ''; position: absolute; bottom: -16px;
+  width: 80px; height: 14px;
+  background: rgba(26,21,48,0.2);
+  border-radius: 50%; filter: blur(6px);
+  animation: shadowPulse 3s ease-in-out infinite;
+}
+@keyframes shadowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(0.6); opacity: 0.2; }
+}
+.title-main {
+  font-family: 'Bungee', sans-serif;
+  font-size: 68px; color: var(--ink); letter-spacing: 4px;
+  text-shadow:
+    3px 3px 0 #fbbf24,
+    6px 6px 0 var(--ink);
+  position: relative; z-index: 1;
+  line-height: 0.9;
+}
+.title-sub {
+  font-size: 18px; color: #6b5b95; font-weight: 600;
+  letter-spacing: 4px; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+.title-desc {
+  font-size: 13px; color: #4b5563; text-align: center; line-height: 2;
+  background: rgba(255,255,255,0.7); border-radius: 16px;
+  padding: 20px 28px;
+  border: 2px dashed rgba(26,21,48,0.2);
+  max-width: 540px;
+  position: relative; z-index: 1;
+  backdrop-filter: blur(10px);
+}
+.title-desc strong { font-weight: 700; }
+
+.big-btn {
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+  color: var(--ink); border: 3px solid var(--ink);
+  padding: 16px 56px; border-radius: 16px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 22px; font-weight: 400; letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 0 var(--ink), 0 8px 16px rgba(0,0,0,0.2);
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative; z-index: 1;
+}
+.big-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 0 var(--ink), 0 12px 20px rgba(0,0,0,0.25);
+}
+.big-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 var(--ink), 0 4px 8px rgba(0,0,0,0.15);
+}
+.title-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: #9ca3af; letter-spacing: 1px;
+  position: relative; z-index: 1;
+}
+.title-hint kbd {
+  background: var(--ink); color: var(--paper);
+  padding: 2px 6px; border-radius: 4px; font-size: 10px;
+  margin: 0 2px;
+}
+
+/* ============ MAP SCREEN ============ */
+#map-screen { flex-direction: column; gap: 14px; }
+.hud {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 0 0 var(--ink);
+}
+.hud-box {
+  font-size: 13px; font-weight: 700;
+  color: var(--ink);
+  padding: 6px 12px; border-radius: 10px;
+  background: #f3f4f6;
+  border: 2px solid var(--ink);
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+.hud-box .icon { font-size: 14px; }
+.hp-hud { background: #fef2f2; }
+.hp-hud-bar {
+  width: 80px; height: 8px; background: #fee2e2;
+  border-radius: 4px; overflow: hidden; border: 1.5px solid var(--ink);
+  margin-left: 4px;
+}
+.hp-hud-fill {
+  height: 100%; background: linear-gradient(90deg, #ef4444, #f87171);
+  transition: width 0.3s cubic-bezier(.34,1.56,.64,1);
+  width: 100%;
+}
+.zone-status { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.zone-badge {
+  padding: 5px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  border: 2px solid var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+}
+.zone-badge.locked   { background: #e5e7eb; color: #9ca3af; }
+.zone-badge.unlocked { background: #dcfce7; color: #166534; }
+.zone-badge.active   { background: var(--gold); color: var(--ink); animation: badgePulse 1.5s ease-in-out infinite; }
+.zone-badge.cleared  { background: var(--ink); color: var(--gold); }
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.map-frame {
+  background: white;
+  border: 4px solid var(--ink);
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 8px 0 0 var(--ink), 0 12px 30px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+canvas {
+  display: block; border-radius: 12px;
+  width: 100%; height: auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.map-hint {
+  font-size: 12px; color: #6b7280; text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+.map-hint kbd {
+  background: var(--ink); color: var(--paper);
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; margin: 0 1px;
+}
+
+#map-toast {
+  position: fixed; top: 30px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--ink); color: var(--paper);
+  padding: 14px 28px;
+  border-radius: 14px;
+  border: 3px solid var(--paper);
+  outline: 3px solid var(--ink);
+  font-size: 14px; font-weight: 600;
+  font-family: 'Fredoka', sans-serif;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+  pointer-events: none; z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+#map-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============ BATTLE SCREEN ============ */
+#battle-screen { flex-direction: column; gap: 14px; }
+.battle-arena {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  perspective: 800px;
+}
+.combatant {
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 6px 0 0 var(--ink);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.1s;
+}
+.combatant.player {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+}
+.combatant.enemy {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+.combatant-name {
+  font-family: 'Bungee', sans-serif;
+  font-size: 13px; color: var(--ink);
+  margin-bottom: 8px; letter-spacing: 2px;
+}
+.combatant-stage {
+  position: relative; height: 110px;
+  display: flex; align-items: flex-end; justify-content: center;
+  margin-bottom: 12px;
+}
+.combatant-shadow {
+  position: absolute; bottom: 4px;
+  width: 80px; height: 14px;
+  background: rgba(26,21,48,0.25);
+  border-radius: 50%;
+  filter: blur(4px);
+  animation: shadowBob 1.6s ease-in-out infinite;
+}
+@keyframes shadowBob {
+  0%, 100% { transform: scaleX(1); opacity: 0.4; }
+  50% { transform: scaleX(0.8); opacity: 0.25; }
+}
+.combatant-sprite {
+  position: relative;
+  width: 90px; height: 90px;
+  animation: spriteBob 1.6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.combatant.enemy .combatant-sprite { animation-delay: 0.3s; }
+@keyframes spriteBob {
+  0%, 100% { transform: translateY(0) scaleY(1) scaleX(1); }
+  50% { transform: translateY(-10px) scaleY(1.04) scaleX(0.96); }
+}
+.combatant-sprite svg { width: 100%; height: 100%; overflow: visible; }
+
+.combatant-sprite.hit { animation: spriteHit 0.5s ease; }
+@keyframes spriteHit {
+  0% { transform: translateY(0); filter: brightness(1); }
+  20% { transform: translateY(-20px) rotate(-15deg); filter: brightness(3) saturate(0); }
+  40% { transform: translateY(-15px) rotate(10deg); filter: brightness(3) saturate(0); }
+  60% { transform: translateY(-8px) rotate(-5deg); filter: brightness(1) saturate(1); }
+  100% { transform: translateY(0) rotate(0); filter: brightness(1); }
+}
+.combatant-sprite.attack { animation: spriteAttack 0.4s ease; }
+@keyframes spriteAttack {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  30% { transform: translateY(-8px) translateX(-15px) rotate(-10deg); }
+  60% { transform: translateY(-4px) translateX(20px) rotate(15deg); }
+}
+.combatant-sprite.defeated { animation: spriteDefeat 0.8s ease forwards; }
+@keyframes spriteDefeat {
+  0% { transform: translateY(0); opacity: 1; }
+  30% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+  100% { transform: translateY(60px) rotate(540deg) scale(0.3); opacity: 0; }
+}
+
+.hp-bar-bg {
+  background: rgba(26,21,48,0.15);
+  border-radius: 10px; height: 16px; overflow: hidden;
+  border: 2px solid var(--ink);
+  position: relative;
+}
+.hp-bar {
+  height: 100%; border-radius: 8px;
+  transition: width 0.5s cubic-bezier(.34,1.56,.64,1);
+  position: relative; overflow: hidden;
+}
+.hp-bar::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), transparent 50%);
+}
+.hp-bar.player-hp { background: linear-gradient(180deg, #34d399 0%, #10b981 100%); }
+.hp-bar.enemy-hp { background: linear-gradient(180deg, #f87171 0%, #dc2626 100%); }
+.hp-bar.low { background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%); animation: hpLow 1s ease-in-out infinite; }
+@keyframes hpLow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+.hp-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--ink);
+  margin-top: 6px; font-weight: 700;
+}
+
+.battle-problem {
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 6px 0 0 var(--ink);
+}
+.problem-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.zone-pill {
+  font-family: 'Bungee', sans-serif;
+  font-size: 11px; letter-spacing: 1.5px;
+  padding: 4px 12px; border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: var(--gold);
+  color: var(--ink);
+}
+.problem-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--ink); line-height: 1.7;
+  white-space: pre-line;
+  background: #f9fafb;
+  border: 2px dashed rgba(26,21,48,0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+.answer-section { display: flex; flex-direction: column; gap: 8px; }
+.input-labels { display: flex; gap: 10px; padding: 0 4px; }
+.input-label {
+  font-family: 'Bungee', sans-serif;
+  font-size: 10px; color: #6b7280; letter-spacing: 1.5px;
+}
+.label-num { flex: 2; }
+.label-unit { flex: 1; }
+.answer-row { display: flex; gap: 10px; }
+.answer-row input[type="number"], .answer-row input[type="text"] {
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  color: var(--ink);
+  padding: 12px 14px;
+  font-size: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 3px 0 0 var(--ink);
+}
+.answer-row #answer-input { flex: 2; }
+.answer-row #unit-input { flex: 1; }
+.answer-row input:focus {
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 0 var(--ink), 0 0 0 4px rgba(251,191,36,0.4);
+}
+.attack-btn {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  color: white; border: 3px solid var(--ink);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 16px; letter-spacing: 1.5px;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 4px 0 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.attack-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 0 var(--ink);
+}
+.attack-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--ink);
+}
+
+.feedback {
+  font-size: 14px; padding: 14px 18px;
+  border-radius: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+  border: 3px solid var(--ink);
+  display: none;
+  animation: feedbackPop 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes feedbackPop {
+  0% { transform: scale(0.8) translateY(10px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.feedback.correct {
+  background: linear-gradient(180deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+.feedback.wrong {
+  background: linear-gradient(180deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+.battle-log {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: #6b7280;
+  font-style: italic; min-height: 20px;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.flee-btn {
+  background: white;
+  border: 3px solid var(--ink); color: #6b7280;
+  border-radius: 12px;
+  padding: 8px 18px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; align-self: center;
+  box-shadow: 0 3px 0 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.flee-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 0 var(--ink); }
+.flee-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ink); }
+
+/* ============ DAMAGE NUMBERS ============ */
+.dmg-num {
+  position: absolute;
+  font-family: 'Bungee', sans-serif;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 2px 2px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink);
+  animation: dmgFloat 1s ease-out forwards;
+}
+.dmg-num.dmg-enemy { color: #fbbf24; }
+.dmg-num.dmg-player { color: #f87171; }
+@keyframes dmgFloat {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -20px) scale(1.4); opacity: 1; }
+  40% { transform: translate(-50%, -30px) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -90px) scale(0.8); opacity: 0; }
+}
+
+/* ============ PARTICLES ============ */
+#particle-layer {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 999;
+}
+.particle {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ============ FLASH ============ */
+#flash-layer {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 998;
+  background: white;
+  opacity: 0;
+}
+#flash-layer.flash {
+  animation: flash 0.25s ease-out;
+}
+@keyframes flash {
+  0% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+
+/* ============ WIN SCREEN ============ */
+#win-screen {
+  flex-direction: column; align-items: center; justify-content: center;
+  min-height: 640px; gap: 22px; padding: 48px;
+  background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: 0 12px 0 0 var(--ink), 0 20px 60px rgba(0,0,0,0.2);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.trophy {
+  font-size: 84px;
+  animation: trophyBounce 1.2s cubic-bezier(.34,1.56,.64,1) infinite;
+  filter: drop-shadow(0 8px 16px rgba(251,191,36,0.5));
+}
+@keyframes trophyBounce {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+}
+.win-title {
+  font-family: 'Bungee', sans-serif;
+  font-size: 48px;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+.win-sub {
+  font-size: 16px; color: #4b5563;
+  max-width: 460px; line-height: 1.8;
+  font-weight: 500;
+}
+
+/* Confetti */
+.confetti {
+  position: absolute; width: 10px; height: 14px;
+  top: -20px;
+  animation: confettiFall 4s linear infinite;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(800px) rotate(720deg); opacity: 0; }
+}
+
+/* Bounce in for screens */
+.screen-enter { animation: screenEnter 0.5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes screenEnter {
+  0% { transform: scale(0.95) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Combo / streak indicator */
+.combo-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--gold);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: 'Bungee', sans-serif;
+  font-size: 11px;
+  padding: 4px 10px; border-radius: 999px;
+  box-shadow: 0 2px 0 var(--ink);
+  letter-spacing: 1px;
+  display: none;
+  animation: comboPop 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes comboPop {
+  0% { transform: scale(0) rotate(-10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ============ BOSS ROOM ============ */
+#boss-room-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.boss-room-frame {
+  position: relative;
+  width: 960px;
+  height: 540px;
+  border: 4px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 8px 0 0 var(--ink), inset 0 0 120px rgba(0,0,0,0.55);
+  overflow: hidden;
+  background: #1a1118;
+}
+/* Stone floor */
+.br-floor {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
+  background:
+    repeating-linear-gradient(90deg,
+      #2a1f26 0 78px, #1f161c 78px 80px),
+    repeating-linear-gradient(0deg,
+      #2a1f26 0 38px, #1f161c 38px 40px);
+  background-blend-mode: multiply;
+  border-top: 3px solid #0d0810;
+  box-shadow: inset 0 8px 24px rgba(0,0,0,0.7);
+}
+.br-floor::after {
+  /* runner rug */
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 8px; width: 320px; height: 90%;
+  transform: translateX(-50%);
+  background:
+    repeating-linear-gradient(90deg, #6b1d2e 0 18px, #4a1320 18px 20px),
+    linear-gradient(180deg, #7a2235 0%, #5a1828 100%);
+  border: 3px solid #2a0a14;
+  box-shadow: 0 0 0 4px #c89b3c, 0 0 0 6px #2a0a14, inset 0 0 30px rgba(0,0,0,0.5);
+  border-radius: 4px;
+}
+/* Brick wall back */
+.br-wall {
+  position: absolute; left: 0; right: 0; top: 0; height: 62%;
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0 38px, rgba(0,0,0,0.55) 38px 42px),
+    repeating-linear-gradient(90deg,
+      transparent 0 78px, rgba(0,0,0,0.55) 78px 82px),
+    linear-gradient(180deg, #3a2a32 0%, #2a1d24 100%);
+}
+/* Offset brick rows */
+.br-wall::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 78px, rgba(255,255,255,0.04) 78px 80px);
+  background-position: 40px 0;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.br-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 70%, transparent 0%, transparent 35%, rgba(0,0,0,0.7) 90%);
+  pointer-events: none;
+}
+/* Torches */
+.br-torch {
+  position: absolute; width: 60px; height: 140px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.br-torch.left  { top: 60px; left: 80px; }
+.br-torch.right { top: 60px; right: 80px; }
+.br-torch.left2 { top: 220px; left: 30px; }
+.br-torch.right2{ top: 220px; right: 30px; }
+.br-torch-flame {
+  width: 26px; height: 36px;
+  background: radial-gradient(ellipse at 50% 80%, #fff5b8 0%, #fbbf24 25%, #f97316 55%, #dc2626 85%, transparent 100%);
+  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+  filter: drop-shadow(0 0 24px #f97316) drop-shadow(0 0 8px #fbbf24);
+  animation: flicker 0.18s ease-in-out infinite alternate;
+  transform-origin: 50% 100%;
+}
+.br-torch-bracket {
+  width: 14px; height: 20px;
+  background: linear-gradient(180deg, #6b4423, #3a230f);
+  border: 2px solid #1a0e05;
+  margin-top: -2px;
+}
+.br-torch-stick {
+  width: 8px; height: 70px;
+  background: linear-gradient(180deg, #5a3415, #2a1808);
+  border-left: 2px solid #1a0e05;
+  border-right: 2px solid #1a0e05;
+}
+.br-torch-glow {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(251,140,60,0.45) 0%, rgba(251,140,60,0) 60%);
+  pointer-events: none;
+  animation: glowPulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes flicker {
+  0% { transform: scaleY(1) scaleX(1) rotate(-2deg); opacity: 1; }
+  100% { transform: scaleY(1.12) scaleX(0.92) rotate(2deg); opacity: 0.92; }
+}
+@keyframes glowPulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+/* Treasure chest */
+.br-chest {
+  position: absolute; bottom: 28px; left: 130px;
+  width: 90px; height: 70px;
+  filter: drop-shadow(0 6px 0 rgba(0,0,0,0.5));
+  animation: chestBob 2.2s ease-in-out infinite;
+}
+@keyframes chestBob {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+/* Banners behind boss */
+.br-banner {
+  position: absolute;
+  width: 70px; height: 160px;
+  background: linear-gradient(180deg, #7a1d2e 0%, #4a1020 100%);
+  border: 3px solid #1a0708;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 50% 100%, 0 90%);
+}
+.br-banner.left  { top: 30px; left: 280px; }
+.br-banner.right { top: 30px; right: 280px; }
+.br-banner-emblem {
+  position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+  font-family: 'Bungee', sans-serif;
+  color: #fbbf24;
+  font-size: 38px;
+  text-shadow: 0 2px 0 #1a0708;
+}
+/* Throne / dais */
+.br-dais {
+  position: absolute;
+  bottom: 60px; left: 50%; transform: translateX(-50%);
+  width: 360px; height: 70px;
+  background:
+    linear-gradient(180deg, #4a3a44 0%, #2a1f28 100%);
+  border: 3px solid #0d0610;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 6px 0 0 #0d0610;
+  z-index: 1;
+}
+.br-dais::before {
+  content: ''; position: absolute; inset: 6px 6px auto 6px; height: 8px;
+  background: repeating-linear-gradient(90deg, #c89b3c 0 14px, #8a6b1f 14px 16px);
+  border: 2px solid #1a0708;
+}
+/* Boss sprite stage */
+.br-boss-stage {
+  position: absolute;
+  bottom: 130px; left: 50%; transform: translateX(-50%);
+  width: 220px; height: 240px;
+  z-index: 2;
+}
+.br-boss-aura {
+  position: absolute; inset: -40px;
+  background: radial-gradient(circle, rgba(168,85,247,0.45) 0%, rgba(168,85,247,0) 65%);
+  animation: bossAuraPulse 2s ease-in-out infinite;
+  border-radius: 50%;
+}
+@keyframes bossAuraPulse {
+  0%,100% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+.br-boss-shadow {
+  position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+  width: 160px; height: 22px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.65) 0%, transparent 70%);
+}
+.br-boss-sprite {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: bossIdle 2.4s ease-in-out infinite;
+}
+.br-boss-sprite svg { width: 200px; height: 220px; }
+@keyframes bossIdle {
+  0%,100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-6px) scale(0.99, 1.01); }
+}
+/* Player on left edge of room */
+.br-player-stage {
+  position: absolute;
+  bottom: 100px; left: 70px;
+  width: 100px; height: 110px;
+  z-index: 2;
+  transition: left 0.3s ease-out, bottom 0.3s ease-out;
+}
+.br-player-stage svg { width: 100%; height: 100%; }
+/* Boss intro nameplate */
+.br-nameplate {
+  position: absolute;
+  top: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--ink);
+  box-shadow: 0 5px 0 0 var(--ink);
+  z-index: 5;
+  animation: namepop 0.6s cubic-bezier(.34,1.56,.64,1);
+}
+.br-nameplate-sub {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #4a2a06;
+  margin-top: 2px;
+}
+@keyframes namepop {
+  0%   { transform: translate(-50%, -40px) scale(0.5); opacity: 0; }
+  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+.br-cta {
+  display: flex; gap: 14px; margin-top: 4px;
+}
+.boss-prompt {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+/* ============ DEV PANEL ============ */
+.dev-fab {
+  position: fixed;
+  bottom: 14px; right: 14px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--gold);
+  border: 3px solid var(--gold);
+  font-family: 'Bungee', sans-serif;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 9000;
+  box-shadow: 0 4px 0 0 rgba(0,0,0,0.4);
+  transition: transform 0.15s;
+  opacity: 0.55;
+}
+.dev-fab:hover { opacity: 1; transform: translateY(-2px); }
+.dev-fab.unlocked { background: #22c55e; color: white; border-color: #14532d; opacity: 1; }
+.dev-modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(26,21,48,0.7);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 9001;
+  backdrop-filter: blur(4px);
+}
+.dev-modal-bg.show { display: flex; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.dev-modal {
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 10px 0 0 var(--ink);
+  padding: 24px;
+  width: 360px;
+  text-align: center;
+}
+.dev-modal h3 {
+  font-family: 'Bungee', sans-serif;
+  font-size: 22px;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+.dev-modal p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  letter-spacing: 1px;
+}
+.dev-modal input {
+  width: 100%;
+  padding: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 8px;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  background: white;
+  box-sizing: border-box;
+  outline: none;
+}
+.dev-modal input:focus { border-color: var(--gold); }
+.dev-modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.dev-modal-btn {
+  flex: 1;
+  padding: 10px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 13px;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 0 var(--ink);
+  letter-spacing: 1px;
+}
+.dev-modal-btn.primary { background: var(--gold); color: var(--ink); }
+.dev-modal-btn.secondary { background: white; color: var(--ink); }
+.dev-modal-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 0 var(--ink); }
+.dev-msg {
+  margin-top: 12px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 14px;
+  min-height: 18px;
+}
+.dev-msg.ok  { color: #166534; }
+.dev-msg.bad { color: #dc2626; }
+.dev-banner {
+  position: fixed;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  background: #22c55e;
+  color: white;
+  font-family: 'Bungee', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border: 3px solid #14532d;
+  border-radius: 99px;
+  z-index: 8000;
+  box-shadow: 0 4px 0 0 #14532d;
+  animation: bannerSlide 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes bannerSlide {
+  from { transform: translate(-50%, -40px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div id="flash-layer"></div>
+
+<!-- Dev unlock fab -->
+<button class="dev-fab" id="dev-fab" onclick="openDevModal()" title="Developer">⚙</button>
+<div class="dev-modal-bg" id="dev-modal-bg" onclick="if(event.target===this)closeDevModal()">
+  <div class="dev-modal">
+    <h3>DEVELOPER ACCESS</h3>
+    <p>ENTER CODE TO UNLOCK ALL LEVELS</p>
+    <input type="password" id="dev-code-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="off"/>
+    <div class="dev-msg" id="dev-msg"></div>
+    <div class="dev-modal-actions">
+      <button class="dev-modal-btn secondary" onclick="closeDevModal()">CANCEL</button>
+      <button class="dev-modal-btn primary" onclick="submitDevCode()">UNLOCK</button>
+    </div>
+  </div>
+</div>
+<div id="particle-layer"></div>
+
+<div id="game">
+
+<!-- ============ TITLE SCREEN ============ -->
+<div id="title-screen">
+  <div class="title-logo-wrap">
+    <svg viewBox="0 0 100 100" width="140" height="140">
+      <!-- Flask -->
+      <defs>
+        <linearGradient id="flaskGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+        <linearGradient id="bubbleGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fde68a"/>
+          <stop offset="100%" stop-color="#fbbf24"/>
+        </linearGradient>
+      </defs>
+      <!-- Flask body -->
+      <path d="M 38 20 L 38 42 L 22 80 Q 22 90 32 90 L 68 90 Q 78 90 78 80 L 62 42 L 62 20 Z"
+            fill="url(#flaskGrad)" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+      <!-- Liquid -->
+      <path d="M 28 60 L 22 80 Q 22 90 32 90 L 68 90 Q 78 90 78 80 L 72 60 Z"
+            fill="#fbbf24" stroke="#1a1530" stroke-width="2"/>
+      <!-- Flask neck rim -->
+      <rect x="36" y="16" width="28" height="6" rx="2" fill="#1a1530"/>
+      <!-- Bubbles -->
+      <circle cx="38" cy="72" r="3" fill="#fef3c7" opacity="0.9">
+        <animate attributeName="cy" values="80;55;80" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="55" cy="74" r="2.5" fill="#fef3c7" opacity="0.9">
+        <animate attributeName="cy" values="80;58;80" dur="2.4s" begin="0.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="2.4s" begin="0.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="46" cy="78" r="2" fill="#fef3c7" opacity="0.9">
+        <animate attributeName="cy" values="82;62;82" dur="1.8s" begin="1s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="1.8s" begin="1s" repeatCount="indefinite"/>
+      </circle>
+      <!-- Highlight -->
+      <path d="M 30 30 L 30 60" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+  </div>
+  <div class="title-main">MOLE QUEST</div>
+  <div class="title-sub">The Stoichiometry Adventure</div>
+  <div class="title-desc">
+    Battle 15 chemistry creatures across 5 zones.<br>Answer correctly to attack — fail and they strike back.<br><br>
+    <strong style="color:#16a34a;">⛰️ Mole Mountain</strong> · mole &amp; gram conversions<br>
+    <strong style="color:#2563eb;">🏛️ Reagent Ruins</strong> · ratios &amp; limiting reagents<br>
+    <strong style="color:#dc2626;">🌋 Yield Peak</strong> · percent yield<br>
+    <strong style="color:#9333ea;">⚗️ Solution Station</strong> · molarity &amp; concentration<br>
+    <strong style="color:#ea580c;">🔥 Reaction Ridge</strong> · ionic equations &amp; redox
+  </div>
+  <button class="big-btn" onclick="startGame()">▶ START QUEST</button>
+  <div class="title-hint">
+    <kbd>WASD</kbd> or <kbd>ARROWS</kbd> to move · <kbd>ENTER</kbd> to attack
+  </div>
+</div>
+
+<!-- ============ MAP SCREEN ============ -->
+<div id="map-screen">
+  <div class="hud">
+    <div class="hud-box hp-hud">
+      <span class="icon">❤️</span> HP <span id="hud-hp">45</span>/45
+      <span class="hp-hud-bar"><span class="hp-hud-fill" id="hud-hp-fill"></span></span>
+    </div>
+    <div class="hud-box"><span class="icon">📍</span> <span id="hud-zone">-</span></div>
+    <div class="hud-box"><span class="icon">⚔️</span> <span id="hud-kills">0</span>/15</div>
+    <div class="zone-status">
+      <span class="zone-badge active"   id="badge-z0">Z1</span>
+      <span class="zone-badge locked"   id="badge-z1">Z2 🔒</span>
+      <span class="zone-badge locked"   id="badge-z2">Z3 🔒</span>
+      <span class="zone-badge locked"   id="badge-z3">Z4 🔒</span>
+      <span class="zone-badge locked"   id="badge-z4">Z5 🔒</span>
+    </div>
+  </div>
+  <div class="map-frame">
+    <canvas id="map-canvas" width="960" height="432"></canvas>
+  </div>
+  <div class="map-hint">
+    <kbd>↑↓←→</kbd> or <kbd>WASD</kbd> · walk into a creature to battle · clear a zone to unlock the next
+  </div>
+</div>
+
+<!-- ============ BOSS ROOM SCREEN ============ -->
+<div id="boss-room-screen">
+  <div class="hud">
+    <div class="hud-box hp-hud">
+      <span class="icon">❤️</span> HP <span id="br-hud-hp">45</span>/45
+      <span class="hp-hud-bar"><span class="hp-hud-fill" id="br-hud-hp-fill"></span></span>
+    </div>
+    <div class="hud-box"><span class="icon">🏰</span> THE INNER SANCTUM</div>
+    <div class="hud-box"><span class="icon">👑</span> FINAL BOSS</div>
+  </div>
+  <div class="boss-room-frame" id="boss-room-frame">
+    <div class="br-wall"></div>
+    <div class="br-floor"></div>
+
+    <!-- Banners -->
+    <div class="br-banner left"><div class="br-banner-emblem">⚛</div></div>
+    <div class="br-banner right"><div class="br-banner-emblem">∆</div></div>
+
+    <!-- Torches -->
+    <div class="br-torch left"><div class="br-torch-glow"></div><div class="br-torch-flame"></div><div class="br-torch-bracket"></div><div class="br-torch-stick"></div></div>
+    <div class="br-torch right"><div class="br-torch-glow"></div><div class="br-torch-flame"></div><div class="br-torch-bracket"></div><div class="br-torch-stick"></div></div>
+    <div class="br-torch left2"><div class="br-torch-glow"></div><div class="br-torch-flame"></div><div class="br-torch-bracket"></div><div class="br-torch-stick"></div></div>
+    <div class="br-torch right2"><div class="br-torch-glow"></div><div class="br-torch-flame"></div><div class="br-torch-bracket"></div><div class="br-torch-stick"></div></div>
+
+    <!-- Treasure chest -->
+    <svg class="br-chest" viewBox="0 0 90 70">
+      <!-- chest body -->
+      <rect x="6" y="28" width="78" height="36" fill="#6b4423" stroke="#1a0e05" stroke-width="3"/>
+      <rect x="10" y="32" width="70" height="28" fill="#8a5a2e"/>
+      <!-- planks -->
+      <line x1="32" y1="32" x2="32" y2="60" stroke="#3a230f" stroke-width="2"/>
+      <line x1="58" y1="32" x2="58" y2="60" stroke="#3a230f" stroke-width="2"/>
+      <!-- lid -->
+      <path d="M6,28 Q45,4 84,28 Z" fill="#7a4f29" stroke="#1a0e05" stroke-width="3"/>
+      <path d="M10,28 Q45,8 80,28 Z" fill="#996937"/>
+      <!-- gold trim -->
+      <rect x="6" y="46" width="78" height="4" fill="#c89b3c" stroke="#5a3f10" stroke-width="1"/>
+      <!-- lock -->
+      <rect x="40" y="38" width="12" height="14" fill="#fbbf24" stroke="#1a0e05" stroke-width="2"/>
+      <circle cx="46" cy="44" r="2" fill="#1a0e05"/>
+      <!-- coins spilling -->
+      <circle cx="14" cy="62" r="3" fill="#fbbf24" stroke="#5a3f10" stroke-width="1"/>
+      <circle cx="20" cy="65" r="3" fill="#fbbf24" stroke="#5a3f10" stroke-width="1"/>
+      <circle cx="78" cy="63" r="3" fill="#fbbf24" stroke="#5a3f10" stroke-width="1"/>
+      <!-- sparkle -->
+      <text x="46" y="22" font-family="Bungee" font-size="12" fill="#fef3c7">✦</text>
+    </svg>
+
+    <!-- second chest right side -->
+    <svg class="br-chest" viewBox="0 0 90 70" style="left:auto; right:130px;">
+      <rect x="6" y="28" width="78" height="36" fill="#6b4423" stroke="#1a0e05" stroke-width="3"/>
+      <rect x="10" y="32" width="70" height="28" fill="#8a5a2e"/>
+      <line x1="32" y1="32" x2="32" y2="60" stroke="#3a230f" stroke-width="2"/>
+      <line x1="58" y1="32" x2="58" y2="60" stroke="#3a230f" stroke-width="2"/>
+      <path d="M6,28 Q45,4 84,28 Z" fill="#7a4f29" stroke="#1a0e05" stroke-width="3"/>
+      <path d="M10,28 Q45,8 80,28 Z" fill="#996937"/>
+      <rect x="6" y="46" width="78" height="4" fill="#c89b3c" stroke="#5a3f10" stroke-width="1"/>
+      <rect x="40" y="38" width="12" height="14" fill="#fbbf24" stroke="#1a0e05" stroke-width="2"/>
+      <circle cx="46" cy="44" r="2" fill="#1a0e05"/>
+    </svg>
+
+    <!-- Throne dais -->
+    <div class="br-dais"></div>
+
+    <!-- Boss -->
+    <div class="br-boss-stage">
+      <div class="br-boss-aura"></div>
+      <div class="br-boss-shadow"></div>
+      <div class="br-boss-sprite" id="br-boss-sprite"></div>
+    </div>
+
+    <!-- Player -->
+    <div class="br-player-stage" id="br-player-stage"></div>
+
+    <!-- Nameplate -->
+    <div class="br-nameplate">
+      MR. STEWART
+      <span class="br-nameplate-sub">▸ MASTER OF THE MOLE ◂</span>
+    </div>
+
+    <div class="br-vignette"></div>
+  </div>
+  <div class="boss-prompt">⚔ Approach the throne to challenge Mr. Stewart!</div>
+  <div class="br-cta">
+    <button class="big-btn" onclick="startBossBattle()" style="font-size: 18px; padding: 14px 28px;">⚔ CHALLENGE MR. STEWART</button>
+    <button class="big-btn" onclick="leaveBossRoom()" style="font-size: 14px; padding: 14px 18px; background:#e5e7eb; color: var(--ink);">↩ RETREAT</button>
+  </div>
+</div>
+
+<!-- ============ BATTLE SCREEN ============ -->
+<div id="battle-screen">
+  <div class="battle-arena">
+    <div class="combatant player" id="player-card">
+      <div class="combatant-name">MOLE HERO</div>
+      <div class="combatant-stage">
+        <div class="combatant-shadow"></div>
+        <div class="combatant-sprite" id="player-sprite"></div>
+      </div>
+      <div class="hp-bar-bg"><div class="hp-bar player-hp" id="player-hp-bar" style="width:100%;"></div></div>
+      <div class="hp-text" id="player-hp-text">45 / 45</div>
+      <div class="combo-badge" id="combo-badge">×2 COMBO!</div>
+    </div>
+    <div class="combatant enemy" id="enemy-card">
+      <div class="combatant-name" id="enemy-name">ENEMY</div>
+      <div class="combatant-stage">
+        <div class="combatant-shadow"></div>
+        <div class="combatant-sprite" id="enemy-sprite"></div>
+      </div>
+      <div class="hp-bar-bg"><div class="hp-bar enemy-hp" id="enemy-hp-bar" style="width:100%;"></div></div>
+      <div class="hp-text" id="enemy-hp-text">12 / 12</div>
+    </div>
+  </div>
+  <div class="battle-problem">
+    <div class="problem-header">
+      <div class="zone-pill" id="problem-zone">ZONE 1</div>
+    </div>
+    <div class="problem-text" id="problem-text">Loading...</div>
+    <div class="answer-section">
+      <div class="input-labels">
+        <span class="input-label label-num">YOUR ANSWER</span>
+        <span class="input-label label-unit" id="label-unit">UNIT</span>
+      </div>
+      <div class="answer-row">
+        <input type="text" id="answer-input" placeholder="e.g. 2.50" />
+        <input type="text"   id="unit-input"   placeholder="mol" />
+        <button class="attack-btn" onclick="submitAnswer()">⚔ ATTACK</button>
+      </div>
+    </div>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="battle-log" id="battle-log"></div>
+  <button class="flee-btn" onclick="fleeBattle()">🏃 Flee (−3 HP)</button>
+</div>
+
+<!-- ============ WIN SCREEN ============ -->
+<div id="win-screen">
+  <div class="trophy">🏆</div>
+  <div class="win-title">VICTORY!</div>
+  <div class="win-sub">You bested all 15 creatures and mastered stoichiometry, solutions, and redox. The chemistry world is saved!</div>
+  <button class="big-btn" onclick="location.reload()">▶ PLAY AGAIN</button>
+</div>
+
+</div>
+
+<div id="map-toast"></div>
+
+<script>
+// ============================================================
+//  SPRITES (inline SVG strings)
+// ============================================================
+const SPRITES = {
+  HERO: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <defs>
+    <linearGradient id="heroBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <!-- Cape -->
+  <path d="M 30 50 Q 18 70 24 95 L 35 92 Q 35 75 38 60 Z" fill="#fbbf24" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Body -->
+  <ellipse cx="50" cy="68" rx="22" ry="26" fill="url(#heroBody)" stroke="#1a1530" stroke-width="3"/>
+  <!-- Belt -->
+  <rect x="30" y="78" width="40" height="6" fill="#1a1530"/>
+  <rect x="46" y="76" width="8" height="10" fill="#fbbf24" stroke="#1a1530" stroke-width="2"/>
+  <!-- Head -->
+  <circle cx="50" cy="35" r="20" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+  <!-- Hair -->
+  <path d="M 32 30 Q 30 18 42 16 Q 50 10 60 16 Q 72 18 70 30 Q 68 24 60 22 Q 50 18 40 22 Q 34 24 32 30 Z" fill="#7c2d12" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Eyes -->
+  <ellipse cx="42" cy="36" rx="2" ry="3" fill="#1a1530"/>
+  <ellipse cx="58" cy="36" rx="2" ry="3" fill="#1a1530"/>
+  <ellipse cx="43" cy="35" rx="0.8" ry="1" fill="white"/>
+  <ellipse cx="59" cy="35" rx="0.8" ry="1" fill="white"/>
+  <!-- Smile -->
+  <path d="M 44 44 Q 50 48 56 44" stroke="#1a1530" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Cheeks -->
+  <circle cx="38" cy="42" r="2.5" fill="#fca5a5" opacity="0.8"/>
+  <circle cx="62" cy="42" r="2.5" fill="#fca5a5" opacity="0.8"/>
+  <!-- Flask weapon -->
+  <g transform="translate(72,55) rotate(20)">
+    <rect x="-3" y="-2" width="6" height="4" fill="#1a1530"/>
+    <path d="M -5 2 L -7 16 Q -7 20 -3 20 L 3 20 Q 7 20 7 16 L 5 2 Z" fill="#22c55e" stroke="#1a1530" stroke-width="2"/>
+  </g>
+  <!-- Arms -->
+  <ellipse cx="28" cy="62" rx="6" ry="9" fill="url(#heroBody)" stroke="#1a1530" stroke-width="2.5"/>
+  <!-- M emblem -->
+  <text x="50" y="74" text-anchor="middle" font-family="Bungee" font-size="14" fill="#fbbf24" stroke="#1a1530" stroke-width="0.5" font-weight="bold">M</text>
+</svg>`,
+
+  // Zone 0: Mole-themed creatures
+  MOLE_SCOUT: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <ellipse cx="50" cy="68" rx="28" ry="24" fill="#a16207" stroke="#1a1530" stroke-width="3"/>
+  <ellipse cx="50" cy="62" rx="18" ry="14" fill="#fde68a"/>
+  <!-- Snout -->
+  <ellipse cx="50" cy="56" rx="10" ry="8" fill="#fbbf24" stroke="#1a1530" stroke-width="2.5"/>
+  <ellipse cx="46" cy="54" rx="1.5" ry="2" fill="#1a1530"/>
+  <ellipse cx="54" cy="54" rx="1.5" ry="2" fill="#1a1530"/>
+  <circle cx="50" cy="58" r="2" fill="#1a1530"/>
+  <!-- Buck teeth -->
+  <rect x="46" y="60" width="3" height="5" fill="white" stroke="#1a1530" stroke-width="1"/>
+  <rect x="51" y="60" width="3" height="5" fill="white" stroke="#1a1530" stroke-width="1"/>
+  <!-- Ears -->
+  <ellipse cx="32" cy="50" rx="5" ry="6" fill="#a16207" stroke="#1a1530" stroke-width="2"/>
+  <ellipse cx="68" cy="50" rx="5" ry="6" fill="#a16207" stroke="#1a1530" stroke-width="2"/>
+  <!-- Claws -->
+  <path d="M 22 78 L 18 88 M 26 80 L 24 90 M 30 82 L 30 92" stroke="#1a1530" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 78 78 L 82 88 M 74 80 L 76 90 M 70 82 L 70 92" stroke="#1a1530" stroke-width="2.5" stroke-linecap="round"/>
+</svg>`,
+
+  ION_GUARD: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Shield body -->
+  <path d="M 30 30 L 70 30 L 75 60 Q 75 88 50 95 Q 25 88 25 60 Z" fill="#3b82f6" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Plus charge -->
+  <rect x="44" y="50" width="12" height="4" fill="white" stroke="#1a1530" stroke-width="1.5"/>
+  <rect x="48" y="46" width="4" height="12" fill="white" stroke="#1a1530" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <ellipse cx="40" cy="40" rx="3" ry="4" fill="white"/>
+  <ellipse cx="60" cy="40" rx="3" ry="4" fill="white"/>
+  <ellipse cx="40" cy="41" rx="1.5" ry="2" fill="#1a1530"/>
+  <ellipse cx="60" cy="41" rx="1.5" ry="2" fill="#1a1530"/>
+  <!-- Frown -->
+  <path d="M 42 72 Q 50 68 58 72" stroke="#1a1530" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Spikes -->
+  <path d="M 35 32 L 32 22 L 40 30 Z" fill="#1e3a8a" stroke="#1a1530" stroke-width="2"/>
+  <path d="M 50 28 L 50 18 L 55 28 Z" fill="#1e3a8a" stroke="#1a1530" stroke-width="2"/>
+  <path d="M 65 32 L 68 22 L 60 30 Z" fill="#1e3a8a" stroke="#1a1530" stroke-width="2"/>
+</svg>`,
+
+  MOLECULE_MAGE: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Robe -->
+  <path d="M 30 50 L 20 95 L 80 95 L 70 50 Z" fill="#7c3aed" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Hood -->
+  <path d="M 28 50 Q 28 25 50 22 Q 72 25 72 50 Q 65 45 50 45 Q 35 45 28 50 Z" fill="#5b21b6" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Face shadow -->
+  <ellipse cx="50" cy="42" rx="14" ry="12" fill="#1a1530"/>
+  <!-- Glowing eyes -->
+  <circle cx="44" cy="40" r="2.5" fill="#fbbf24"/>
+  <circle cx="56" cy="40" r="2.5" fill="#fbbf24"/>
+  <!-- Orbiting molecules -->
+  <circle cx="22" cy="65" r="6" fill="#22c55e" stroke="#1a1530" stroke-width="2"/>
+  <circle cx="78" cy="65" r="6" fill="#ef4444" stroke="#1a1530" stroke-width="2"/>
+  <line x1="28" y1="65" x2="42" y2="60" stroke="#1a1530" stroke-width="2"/>
+  <line x1="72" y1="65" x2="58" y2="60" stroke="#1a1530" stroke-width="2"/>
+  <!-- Star on hood -->
+  <path d="M 50 30 L 52 35 L 57 35 L 53 38 L 55 43 L 50 40 L 45 43 L 47 38 L 43 35 L 48 35 Z" fill="#fbbf24" stroke="#1a1530" stroke-width="1"/>
+</svg>`,
+
+  // Zone 1: Reagent Ruins
+  REAGENT_WARDEN: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Stone golem body -->
+  <rect x="28" y="50" width="44" height="42" rx="4" fill="#78716c" stroke="#1a1530" stroke-width="3"/>
+  <!-- Cracks -->
+  <path d="M 35 60 L 40 70 L 38 80 M 60 55 L 55 65 L 62 75" stroke="#1a1530" stroke-width="1.5" fill="none"/>
+  <!-- Head -->
+  <rect x="34" y="20" width="32" height="32" rx="3" fill="#a8a29e" stroke="#1a1530" stroke-width="3"/>
+  <!-- Eyes glowing -->
+  <rect x="40" y="32" width="6" height="5" fill="#3b82f6"/>
+  <rect x="54" y="32" width="6" height="5" fill="#3b82f6"/>
+  <!-- Mouth -->
+  <rect x="42" y="44" width="16" height="3" fill="#1a1530"/>
+  <!-- Shoulders -->
+  <rect x="20" y="52" width="10" height="20" rx="2" fill="#57534e" stroke="#1a1530" stroke-width="2.5"/>
+  <rect x="70" y="52" width="10" height="20" rx="2" fill="#57534e" stroke="#1a1530" stroke-width="2.5"/>
+  <!-- Runes -->
+  <text x="50" y="78" text-anchor="middle" font-family="Bungee" font-size="11" fill="#fbbf24">2:1</text>
+</svg>`,
+
+  RATIO_RANGER: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Body -->
+  <ellipse cx="50" cy="62" rx="20" ry="28" fill="#15803d" stroke="#1a1530" stroke-width="3"/>
+  <!-- Hood -->
+  <path d="M 30 45 Q 32 25 50 22 Q 68 25 70 45 Q 60 38 50 38 Q 40 38 30 45 Z" fill="#166534" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Eyes -->
+  <ellipse cx="42" cy="40" rx="3" ry="4" fill="white"/>
+  <ellipse cx="58" cy="40" rx="3" ry="4" fill="white"/>
+  <ellipse cx="43" cy="41" rx="1.5" ry="2" fill="#1a1530"/>
+  <ellipse cx="59" cy="41" rx="1.5" ry="2" fill="#1a1530"/>
+  <!-- Bow -->
+  <path d="M 75 40 Q 90 60 75 80" stroke="#7c2d12" stroke-width="3" fill="none"/>
+  <line x1="75" y1="40" x2="75" y2="80" stroke="#1a1530" stroke-width="1"/>
+  <line x1="75" y1="60" x2="55" y2="55" stroke="#1a1530" stroke-width="2"/>
+  <polygon points="55,55 50,52 50,58" fill="#1a1530"/>
+  <!-- Quiver -->
+  <rect x="20" y="55" width="8" height="20" rx="2" fill="#7c2d12" stroke="#1a1530" stroke-width="2"/>
+  <line x1="22" y1="55" x2="22" y2="50" stroke="#1a1530" stroke-width="2"/>
+  <line x1="26" y1="55" x2="26" y2="48" stroke="#1a1530" stroke-width="2"/>
+</svg>`,
+
+  LIMITING_LICH: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Cloak -->
+  <path d="M 25 45 L 15 95 L 85 95 L 75 45 Z" fill="#1e293b" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Skull -->
+  <ellipse cx="50" cy="40" rx="18" ry="20" fill="#f5f5f4" stroke="#1a1530" stroke-width="3"/>
+  <!-- Eye sockets -->
+  <ellipse cx="42" cy="40" rx="4" ry="5" fill="#1a1530"/>
+  <ellipse cx="58" cy="40" rx="4" ry="5" fill="#1a1530"/>
+  <circle cx="42" cy="40" r="2" fill="#22c55e"/>
+  <circle cx="58" cy="40" r="2" fill="#22c55e"/>
+  <!-- Nose -->
+  <path d="M 50 46 L 47 52 L 53 52 Z" fill="#1a1530"/>
+  <!-- Teeth -->
+  <rect x="40" y="54" width="20" height="6" fill="#f5f5f4" stroke="#1a1530" stroke-width="1.5"/>
+  <line x1="44" y1="54" x2="44" y2="60" stroke="#1a1530" stroke-width="1"/>
+  <line x1="48" y1="54" x2="48" y2="60" stroke="#1a1530" stroke-width="1"/>
+  <line x1="52" y1="54" x2="52" y2="60" stroke="#1a1530" stroke-width="1"/>
+  <line x1="56" y1="54" x2="56" y2="60" stroke="#1a1530" stroke-width="1"/>
+  <!-- Staff -->
+  <line x1="78" y1="40" x2="82" y2="92" stroke="#7c2d12" stroke-width="3"/>
+  <circle cx="78" cy="38" r="6" fill="#22c55e" stroke="#1a1530" stroke-width="2"/>
+  <circle cx="78" cy="38" r="2" fill="#fbbf24"/>
+</svg>`,
+
+  // Zone 2: Yield Peak
+  YIELD_WATCHER: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Eye monster -->
+  <circle cx="50" cy="55" r="32" fill="#dc2626" stroke="#1a1530" stroke-width="3"/>
+  <circle cx="50" cy="55" r="22" fill="#fef2f2" stroke="#1a1530" stroke-width="2.5"/>
+  <circle cx="50" cy="55" r="12" fill="#1a1530"/>
+  <circle cx="46" cy="51" r="3" fill="white"/>
+  <!-- Veins -->
+  <path d="M 28 50 Q 35 45 40 48 M 30 60 Q 38 65 42 62 M 70 50 Q 65 45 60 48" stroke="#dc2626" stroke-width="1.5" fill="none"/>
+  <!-- Tentacles -->
+  <path d="M 22 80 Q 18 90 22 95 M 35 88 Q 32 95 35 98 M 50 90 Q 50 96 50 100 M 65 88 Q 68 95 65 98 M 78 80 Q 82 90 78 95" stroke="#dc2626" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>`,
+
+  PERCENT_PHANTOM: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Ghost body -->
+  <path d="M 25 45 Q 25 20 50 20 Q 75 20 75 45 L 75 90 L 68 84 L 60 90 L 52 84 L 44 90 L 36 84 L 28 90 Z"
+        fill="#fecaca" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Eyes -->
+  <ellipse cx="40" cy="42" rx="4" ry="6" fill="#1a1530"/>
+  <ellipse cx="60" cy="42" rx="4" ry="6" fill="#1a1530"/>
+  <!-- Mouth O -->
+  <ellipse cx="50" cy="58" rx="5" ry="7" fill="#1a1530"/>
+  <!-- % symbol -->
+  <text x="50" y="78" text-anchor="middle" font-family="Bungee" font-size="14" fill="#dc2626" stroke="#1a1530" stroke-width="0.5">%</text>
+</svg>`,
+
+  ACTUAL_ALCHEMIST: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Body -->
+  <ellipse cx="50" cy="68" rx="22" ry="24" fill="#9a3412" stroke="#1a1530" stroke-width="3"/>
+  <!-- Apron -->
+  <rect x="38" y="62" width="24" height="28" fill="#fef3c7" stroke="#1a1530" stroke-width="2.5"/>
+  <line x1="40" y1="68" x2="60" y2="68" stroke="#1a1530" stroke-width="1.5"/>
+  <line x1="40" y1="74" x2="60" y2="74" stroke="#1a1530" stroke-width="1.5"/>
+  <!-- Head -->
+  <circle cx="50" cy="38" r="18" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+  <!-- Goggles -->
+  <circle cx="42" cy="36" r="6" fill="#a8a29e" stroke="#1a1530" stroke-width="2.5"/>
+  <circle cx="58" cy="36" r="6" fill="#a8a29e" stroke="#1a1530" stroke-width="2.5"/>
+  <circle cx="42" cy="36" r="3" fill="#22c55e"/>
+  <circle cx="58" cy="36" r="3" fill="#22c55e"/>
+  <line x1="48" y1="36" x2="52" y2="36" stroke="#1a1530" stroke-width="2"/>
+  <!-- Mustache -->
+  <path d="M 42 48 Q 46 52 50 50 Q 54 52 58 48" stroke="#7c2d12" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Flask -->
+  <g transform="translate(75,55)">
+    <path d="M -4 -2 L -4 5 L -8 18 Q -8 22 -4 22 L 4 22 Q 8 22 8 18 L 4 5 L 4 -2 Z" fill="#dc2626" stroke="#1a1530" stroke-width="2"/>
+    <circle cx="-3" cy="-5" r="2" fill="#fca5a5" opacity="0.8"/>
+    <circle cx="2" cy="-8" r="1.5" fill="#fca5a5" opacity="0.8"/>
+  </g>
+</svg>`,
+
+  // Zone 3: Solution Station
+  MOLARITY_MONK: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Robe -->
+  <path d="M 32 50 L 22 95 L 78 95 L 68 50 Z" fill="#a855f7" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Sash -->
+  <rect x="32" y="65" width="36" height="5" fill="#fbbf24" stroke="#1a1530" stroke-width="1.5"/>
+  <!-- Head -->
+  <circle cx="50" cy="38" r="18" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+  <!-- Bald top -->
+  <path d="M 32 38 Q 32 22 50 22 Q 68 22 68 38" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+  <!-- Closed eyes -->
+  <path d="M 40 38 Q 43 36 46 38" stroke="#1a1530" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 54 38 Q 57 36 60 38" stroke="#1a1530" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M 44 48 Q 50 52 56 48" stroke="#1a1530" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Beads -->
+  <circle cx="42" cy="58" r="2" fill="#dc2626" stroke="#1a1530" stroke-width="1"/>
+  <circle cx="48" cy="60" r="2" fill="#fbbf24" stroke="#1a1530" stroke-width="1"/>
+  <circle cx="54" cy="60" r="2" fill="#22c55e" stroke="#1a1530" stroke-width="1"/>
+  <circle cx="60" cy="58" r="2" fill="#3b82f6" stroke="#1a1530" stroke-width="1"/>
+  <!-- M letter -->
+  <text x="50" y="86" text-anchor="middle" font-family="Bungee" font-size="14" fill="#fbbf24">M</text>
+</svg>`,
+
+  DILUTION_DRAKE: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Body -->
+  <ellipse cx="50" cy="65" rx="28" ry="22" fill="#0ea5e9" stroke="#1a1530" stroke-width="3"/>
+  <!-- Belly -->
+  <ellipse cx="50" cy="70" rx="18" ry="12" fill="#7dd3fc"/>
+  <!-- Head -->
+  <ellipse cx="50" cy="38" rx="18" ry="16" fill="#0284c7" stroke="#1a1530" stroke-width="3"/>
+  <!-- Snout -->
+  <ellipse cx="50" cy="44" rx="10" ry="6" fill="#0ea5e9" stroke="#1a1530" stroke-width="2"/>
+  <circle cx="46" cy="42" r="1" fill="#1a1530"/>
+  <circle cx="54" cy="42" r="1" fill="#1a1530"/>
+  <!-- Eyes -->
+  <ellipse cx="42" cy="34" rx="3" ry="4" fill="white"/>
+  <ellipse cx="58" cy="34" rx="3" ry="4" fill="white"/>
+  <ellipse cx="42" cy="35" rx="1.5" ry="2" fill="#1a1530"/>
+  <ellipse cx="58" cy="35" rx="1.5" ry="2" fill="#1a1530"/>
+  <!-- Horns -->
+  <path d="M 36 24 L 32 14 L 40 22 Z" fill="#fbbf24" stroke="#1a1530" stroke-width="2"/>
+  <path d="M 64 24 L 68 14 L 60 22 Z" fill="#fbbf24" stroke="#1a1530" stroke-width="2"/>
+  <!-- Wings -->
+  <path d="M 22 55 Q 8 50 6 70 Q 18 68 25 70 Z" fill="#0284c7" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 78 55 Q 92 50 94 70 Q 82 68 75 70 Z" fill="#0284c7" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Drip -->
+  <path d="M 50 52 Q 50 60 52 60 Q 54 60 54 56 Z" fill="#7dd3fc" stroke="#1a1530" stroke-width="1.5"/>
+</svg>`,
+
+  SOLUTION_SAGE: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Robe -->
+  <path d="M 28 48 L 18 95 L 82 95 L 72 48 Z" fill="#581c87" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Stars -->
+  <text x="34" y="75" font-size="8" fill="#fbbf24">✦</text>
+  <text x="60" y="80" font-size="8" fill="#fbbf24">✦</text>
+  <text x="44" y="88" font-size="8" fill="#fbbf24">✦</text>
+  <!-- Head -->
+  <circle cx="50" cy="35" r="15" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+  <!-- Hat -->
+  <path d="M 28 30 L 50 5 L 72 30 Z" fill="#581c87" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Star on hat -->
+  <text x="50" y="22" text-anchor="middle" font-size="12" fill="#fbbf24" stroke="#1a1530" stroke-width="0.5">★</text>
+  <!-- Eyes -->
+  <ellipse cx="44" cy="35" rx="2" ry="3" fill="#1a1530"/>
+  <ellipse cx="56" cy="35" rx="2" ry="3" fill="#1a1530"/>
+  <!-- Beard -->
+  <path d="M 38 42 Q 50 60 62 42 Q 60 50 50 55 Q 40 50 38 42 Z" fill="white" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Staff -->
+  <line x1="20" y1="20" x2="14" y2="92" stroke="#7c2d12" stroke-width="3"/>
+  <circle cx="20" cy="18" r="7" fill="#a855f7" stroke="#1a1530" stroke-width="2.5"/>
+  <text x="20" y="22" text-anchor="middle" font-size="9" fill="white" font-family="Bungee">M</text>
+</svg>`,
+
+  // Zone 4: Reaction Ridge
+  REDOX_RIDER: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Mount -->
+  <ellipse cx="50" cy="80" rx="32" ry="14" fill="#7c2d12" stroke="#1a1530" stroke-width="3"/>
+  <!-- Mount head -->
+  <ellipse cx="78" cy="74" rx="10" ry="8" fill="#7c2d12" stroke="#1a1530" stroke-width="2.5"/>
+  <circle cx="80" cy="72" r="1.5" fill="#fbbf24"/>
+  <!-- Mount legs -->
+  <rect x="28" y="86" width="5" height="8" fill="#7c2d12" stroke="#1a1530" stroke-width="2"/>
+  <rect x="62" y="86" width="5" height="8" fill="#7c2d12" stroke="#1a1530" stroke-width="2"/>
+  <!-- Rider body -->
+  <ellipse cx="45" cy="55" rx="14" ry="20" fill="#dc2626" stroke="#1a1530" stroke-width="3"/>
+  <!-- Helmet -->
+  <path d="M 30 35 Q 30 18 45 18 Q 60 18 60 35 L 58 42 L 32 42 Z" fill="#737373" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Visor slit -->
+  <rect x="34" y="32" width="22" height="4" fill="#fbbf24"/>
+  <!-- Plume -->
+  <path d="M 45 18 Q 45 8 50 5 Q 48 12 47 18 Z" fill="#dc2626" stroke="#1a1530" stroke-width="2"/>
+  <!-- Sword -->
+  <line x1="20" y1="42" x2="8" y2="30" stroke="#a8a29e" stroke-width="4" stroke-linecap="round"/>
+  <line x1="20" y1="42" x2="8" y2="30" stroke="#1a1530" stroke-width="1"/>
+  <rect x="18" y="42" width="6" height="3" fill="#fbbf24" stroke="#1a1530" stroke-width="1"/>
+  <!-- e- markers -->
+  <text x="68" y="50" font-family="Bungee" font-size="9" fill="#fbbf24" stroke="#1a1530" stroke-width="0.5">e⁻</text>
+</svg>`,
+
+  IONIC_INFERNO: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <!-- Flame body -->
+  <path d="M 50 95 Q 20 90 22 70 Q 22 55 30 50 Q 28 38 38 32 Q 36 20 48 18 Q 50 8 56 18 Q 62 14 64 28 Q 76 32 74 48 Q 80 55 78 72 Q 78 90 50 95 Z"
+        fill="#f97316" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner flame -->
+  <path d="M 50 88 Q 32 84 35 70 Q 36 58 42 54 Q 42 42 50 38 Q 58 42 58 54 Q 64 58 65 70 Q 68 84 50 88 Z"
+        fill="#fbbf24"/>
+  <!-- Eyes -->
+  <ellipse cx="42" cy="55" rx="4" ry="5" fill="#1a1530"/>
+  <ellipse cx="58" cy="55" rx="4" ry="5" fill="#1a1530"/>
+  <circle cx="43" cy="54" r="1.5" fill="white"/>
+  <circle cx="59" cy="54" r="1.5" fill="white"/>
+  <!-- Mouth -->
+  <path d="M 40 70 Q 50 78 60 70 L 56 74 L 50 72 L 44 74 Z" fill="#1a1530"/>
+  <!-- Charge symbols -->
+  <text x="20" y="50" font-family="Bungee" font-size="10" fill="#dc2626" stroke="#1a1530" stroke-width="0.5">+</text>
+  <text x="78" y="50" font-family="Bungee" font-size="12" fill="#dc2626" stroke="#1a1530" stroke-width="0.5">−</text>
+</svg>`,
+
+  MR_STEWART: `
+<svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">
+  <defs>
+    <radialGradient id="stewartGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#fef3c7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Aura glow -->
+  <circle cx="50" cy="55" r="48" fill="url(#stewartGlow)"/>
+
+  <!-- Backpack straps showing behind shoulders -->
+  <rect x="22" y="58" width="6" height="32" rx="2" fill="#374151" stroke="#1a1530" stroke-width="2"/>
+  <rect x="72" y="58" width="6" height="32" rx="2" fill="#374151" stroke="#1a1530" stroke-width="2"/>
+  <!-- Backpack strap clip -->
+  <rect x="20" y="68" width="10" height="3" fill="#1a1530"/>
+  <rect x="70" y="68" width="10" height="3" fill="#1a1530"/>
+
+  <!-- Body / Gray fleece jacket -->
+  <path d="M 24 56 Q 24 50 32 50 L 68 50 Q 76 50 76 56 L 80 92 Q 80 96 76 96 L 24 96 Q 20 96 20 92 Z"
+        fill="#9ca3af" stroke="#1a1530" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Fleece zipper line -->
+  <line x1="50" y1="52" x2="50" y2="92" stroke="#1a1530" stroke-width="1.5"/>
+  <line x1="50" y1="52" x2="50" y2="92" stroke="#6b7280" stroke-width="0.5" stroke-dasharray="2,2"/>
+  <!-- Fleece zipper pull -->
+  <rect x="48" y="60" width="4" height="3" fill="#1a1530"/>
+  <!-- Fleece collar -->
+  <path d="M 30 50 Q 38 56 50 56 Q 62 56 70 50" fill="#6b7280" stroke="#1a1530" stroke-width="2"/>
+  <!-- Backpack outline behind body (peeking) -->
+  <ellipse cx="50" cy="76" rx="34" ry="20" fill="#4b5563" stroke="#1a1530" stroke-width="2.5" opacity="0.4"/>
+  <!-- M emblem on jacket (Michigan-style) -->
+  <circle cx="62" cy="76" r="6" fill="#fbbf24" stroke="#1a1530" stroke-width="2"/>
+  <text x="62" y="79" text-anchor="middle" font-family="Bungee" font-size="7" fill="#1a1530">M</text>
+
+  <!-- Neck -->
+  <rect x="44" y="46" width="12" height="8" fill="#fde68a" stroke="#1a1530" stroke-width="2.5"/>
+
+  <!-- Head -->
+  <ellipse cx="50" cy="32" rx="17" ry="19" fill="#fde68a" stroke="#1a1530" stroke-width="3"/>
+
+  <!-- Receding/short hair on sides + top hint -->
+  <path d="M 33 28 Q 34 18 42 17 Q 50 16 58 17 Q 66 18 67 28 Q 65 22 58 22 Q 50 21 42 22 Q 35 22 33 28 Z"
+        fill="#7c2d12" stroke="#1a1530" stroke-width="2" stroke-linejoin="round" opacity="0.55"/>
+  <!-- Bald top highlight -->
+  <ellipse cx="50" cy="22" rx="9" ry="4" fill="#fcd34d" opacity="0.6"/>
+
+  <!-- Sunglasses -->
+  <!-- Lens shadows -->
+  <ellipse cx="42" cy="32" rx="6.5" ry="5" fill="#1a1530" stroke="#1a1530" stroke-width="2.5"/>
+  <ellipse cx="58" cy="32" rx="6.5" ry="5" fill="#1a1530" stroke="#1a1530" stroke-width="2.5"/>
+  <!-- Bridge -->
+  <line x1="48.5" y1="32" x2="51.5" y2="32" stroke="#1a1530" stroke-width="2.5"/>
+  <!-- Lens highlights (light reflection) -->
+  <ellipse cx="40" cy="30" rx="2" ry="1.5" fill="#94a3b8" opacity="0.8"/>
+  <ellipse cx="56" cy="30" rx="2" ry="1.5" fill="#94a3b8" opacity="0.8"/>
+  <ellipse cx="44" cy="33.5" rx="0.8" ry="0.6" fill="#cbd5e1" opacity="0.6"/>
+  <ellipse cx="60" cy="33.5" rx="0.8" ry="0.6" fill="#cbd5e1" opacity="0.6"/>
+
+  <!-- Beard (brown, short, full) -->
+  <path d="M 35 38 Q 36 46 42 50 Q 50 54 58 50 Q 64 46 65 38 Q 62 42 50 43 Q 38 42 35 38 Z"
+        fill="#7c2d12" stroke="#1a1530" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Beard texture -->
+  <path d="M 40 42 L 40 47 M 44 43 L 44 49 M 50 44 L 50 50 M 56 43 L 56 49 M 60 42 L 60 47"
+        stroke="#5b1f0c" stroke-width="0.8" opacity="0.5"/>
+  <!-- Mustache -->
+  <path d="M 42 40 Q 50 44 58 40" stroke="#5b1f0c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Smile (subtle, peeking through beard) -->
+  <path d="M 44 46 Q 50 49 56 46" stroke="#1a1530" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <!-- Tiny tooth glint -->
+  <rect x="48" y="46" width="4" height="1.5" fill="#fef9f3"/>
+
+  <!-- Floating chemistry symbols around him (boss aura) -->
+  <text x="14" y="30" font-family="Bungee" font-size="9" fill="#a855f7" stroke="#1a1530" stroke-width="0.4" opacity="0.8">⚛</text>
+  <text x="80" y="22" font-family="Bungee" font-size="9" fill="#22c55e" stroke="#1a1530" stroke-width="0.4" opacity="0.8">∆</text>
+  <text x="86" y="58" font-family="Bungee" font-size="8" fill="#dc2626" stroke="#1a1530" stroke-width="0.4" opacity="0.8">M</text>
+
+  <!-- Pointer arm with chalk piece (teacher pose) -->
+  <ellipse cx="22" cy="68" rx="6" ry="9" fill="#9ca3af" stroke="#1a1530" stroke-width="2.5" transform="rotate(-15 22 68)"/>
+  <rect x="14" y="62" width="6" height="3" fill="#fef9f3" stroke="#1a1530" stroke-width="1.5"/>
+</svg>`,
+};
+
+// ============================================================
+//  CONSTANTS & STATE
+// ============================================================
+const TILE = 48;
+const COLS = 20, ROWS = 9;
+const canvas = document.getElementById('map-canvas');
+const ctx = canvas.getContext('2d');
+
+const ZONES = [
+  { name: 'Mole Mountain',    bg1: '#dcfce7', bg2: '#bbf7d0', grid: 'rgba(22,163,74,0.18)', label: '#16a34a', accent: '#22c55e' },
+  { name: 'Reagent Ruins',    bg1: '#dbeafe', bg2: '#bfdbfe', grid: 'rgba(37,99,235,0.18)', label: '#2563eb', accent: '#3b82f6' },
+  { name: 'Yield Peak',       bg1: '#fee2e2', bg2: '#fecaca', grid: 'rgba(220,38,38,0.18)', label: '#dc2626', accent: '#ef4444' },
+  { name: 'Solution Station', bg1: '#f3e8ff', bg2: '#e9d5ff', grid: 'rgba(147,51,234,0.18)', label: '#9333ea', accent: '#a855f7' },
+  { name: 'Reaction Ridge',   bg1: '#ffedd5', bg2: '#fed7aa', grid: 'rgba(234,88,12,0.18)', label: '#ea580c', accent: '#f97316' },
+];
+
+function decodeA(s) { return parseFloat(atob(s)); }
+
+const ATOMIC_MASS = {
+  H: 1.008,
+  C: 12.011,
+  N: 14.007,
+  O: 15.999,
+  F: 18.998,
+  Na: 22.990,
+  Mg: 24.305,
+  Al: 26.982,
+  P: 30.974,
+  S: 32.06,
+  Cl: 35.45,
+  K: 39.098,
+  Ca: 40.078,
+  Cr: 52.00,
+  Mn: 54.938,
+  Fe: 55.845,
+  Co: 58.933,
+  Cu: 63.546,
+  Zn: 65.38,
+  Br: 79.904,
+  Ag: 107.868,
+  I: 126.904,
+  Ba: 137.327,
+  Pb: 207.2,
+};
+
+const COMPOUNDS = [
+  { formula: 'Ca3(PO4)2', comp: { Ca: 3, P: 2, O: 8 } },
+  { formula: 'Fe2(SO4)3', comp: { Fe: 2, S: 3, O: 12 } },
+  { formula: 'Al2(SO4)3', comp: { Al: 2, S: 3, O: 12 } },
+  { formula: 'K2Cr2O7', comp: { K: 2, Cr: 2, O: 7 } },
+  { formula: 'Mg(NO3)2', comp: { Mg: 1, N: 2, O: 6 } },
+  { formula: '(NH4)2SO4', comp: { N: 2, H: 8, S: 1, O: 4 } },
+  { formula: 'CuSO4·5H2O', comp: { Cu: 1, S: 1, O: 9, H: 10 } },
+  { formula: 'BaCl2·2H2O', comp: { Ba: 1, Cl: 2, H: 4, O: 2 } },
+  { formula: 'Na2CO3', comp: { Na: 2, C: 1, O: 3 } },
+  { formula: 'FeCl3', comp: { Fe: 1, Cl: 3 } },
+  { formula: 'Al(NO3)3', comp: { Al: 1, N: 3, O: 9 } },
+  { formula: 'Ca(OH)2', comp: { Ca: 1, O: 2, H: 2 } },
+  { formula: 'H2SO4', comp: { H: 2, S: 1, O: 4 } },
+  { formula: 'ZnSO4·7H2O', comp: { Zn: 1, S: 1, O: 11, H: 14 } },
+  { formula: 'NaHCO3', comp: { Na: 1, H: 1, C: 1, O: 3 } },
+];
+
+const HYDRATES = [
+  { formula: 'CuSO4·5H2O', anhydrous: 'CuSO4', waterCount: 5, comp: { Cu: 1, S: 1, O: 9, H: 10 } },
+  { formula: 'BaCl2·2H2O', anhydrous: 'BaCl2', waterCount: 2, comp: { Ba: 1, Cl: 2, H: 4, O: 2 } },
+  { formula: 'MgSO4·7H2O', anhydrous: 'MgSO4', waterCount: 7, comp: { Mg: 1, S: 1, O: 11, H: 14 } },
+  { formula: 'CoCl2·6H2O', anhydrous: 'CoCl2', waterCount: 6, comp: { Co: 1, Cl: 2, H: 12, O: 6 } },
+];
+
+const ACIDS = [
+  { name: 'HF', Ka: 6.8e-4, pKa: 3.17 },
+  { name: 'HNO2', Ka: 4.5e-4, pKa: 3.35 },
+  { name: 'HC2H3O2', Ka: 1.8e-5, pKa: 4.74 },
+  { name: 'HCOOH', Ka: 1.8e-4, pKa: 3.74 },
+];
+
+const BUFFERS = [
+  { acid: 'HC2H3O2', base: 'C2H3O2-', pKa: 4.74 },
+  { acid: 'HF', base: 'F-', pKa: 3.17 },
+  { acid: 'NH4+', base: 'NH3', pKa: 9.25 },
+  { acid: 'H2CO3', base: 'HCO3-', pKa: 6.35 },
+];
+
+const STOICH_RXNS = [
+  {
+    equation: '2Al + 3Cl2 -> 2AlCl3',
+    reactants: [
+      { formula: 'Al', coef: 2, mm: 26.98 },
+      { formula: 'Cl2', coef: 3, mm: 70.90 },
+    ],
+    product: { formula: 'AlCl3', coef: 2, mm: 133.34 },
+  },
+  {
+    equation: 'N2 + 3H2 -> 2NH3',
+    reactants: [
+      { formula: 'N2', coef: 1, mm: 28.02 },
+      { formula: 'H2', coef: 3, mm: 2.016 },
+    ],
+    product: { formula: 'NH3', coef: 2, mm: 17.03 },
+  },
+  {
+    equation: 'Fe2O3 + 3CO -> 2Fe + 3CO2',
+    reactants: [
+      { formula: 'Fe2O3', coef: 1, mm: 159.69 },
+      { formula: 'CO', coef: 3, mm: 28.01 },
+    ],
+    product: { formula: 'Fe', coef: 2, mm: 55.85 },
+  },
+  {
+    equation: '2Na + Cl2 -> 2NaCl',
+    reactants: [
+      { formula: 'Na', coef: 2, mm: 22.99 },
+      { formula: 'Cl2', coef: 1, mm: 70.90 },
+    ],
+    product: { formula: 'NaCl', coef: 2, mm: 58.44 },
+  },
+  {
+    equation: 'Na2CO3 + 2HCl -> 2NaCl + H2O + CO2',
+    reactants: [
+      { formula: 'Na2CO3', coef: 1, mm: 105.99 },
+      { formula: 'HCl', coef: 2, mm: 36.46 },
+    ],
+    product: { formula: 'CO2', coef: 1, mm: 44.01 },
+  },
+];
+
+const PRECIP_RXNS = [
+  {
+    equation: 'AgNO3(aq) + NaCl(aq) -> AgCl(s) + NaNO3(aq)',
+    reactants: [
+      { formula: 'AgNO3', coef: 1, mm: 169.87 },
+      { formula: 'NaCl', coef: 1, mm: 58.44 },
+    ],
+    product: { formula: 'AgCl', coef: 1, mm: 143.32 },
+  },
+  {
+    equation: 'BaCl2(aq) + Na2SO4(aq) -> BaSO4(s) + 2NaCl(aq)',
+    reactants: [
+      { formula: 'BaCl2', coef: 1, mm: 208.23 },
+      { formula: 'Na2SO4', coef: 1, mm: 142.04 },
+    ],
+    product: { formula: 'BaSO4', coef: 1, mm: 233.39 },
+  },
+  {
+    equation: 'Pb(NO3)2(aq) + 2KI(aq) -> PbI2(s) + 2KNO3(aq)',
+    reactants: [
+      { formula: 'Pb(NO3)2', coef: 1, mm: 331.20 },
+      { formula: 'KI', coef: 2, mm: 166.00 },
+    ],
+    product: { formula: 'PbI2', coef: 1, mm: 461.00 },
+  },
+];
+
+const EMPIRICAL_SCENARIOS = [
+  {
+    stem: 'A compound is 40.0% C, 6.7% H, and 53.3% O by mass.',
+    correct: 'CH2O',
+    distractors: ['C2H4O2', 'C3H6O3', 'CH4O'],
+    hint: 'The mole ratio reduces to 1:2:1.',
+  },
+  {
+    stem: 'A compound is 49.5% C, 5.1% H, 28.9% N, and 16.5% O by mass.',
+    correct: 'C4H5N2O',
+    distractors: ['C8H10N4O2', 'C2H5NO', 'C6H8N2O2'],
+    hint: 'Divide each mole amount by the smallest value.',
+  },
+  {
+    stem: 'A compound is 92.3% C and 7.7% H by mass.',
+    correct: 'CH',
+    distractors: ['CH2', 'C2H4', 'C3H3'],
+    hint: 'The simplest whole-number ratio is 1:1.',
+  },
+  {
+    stem: 'A compound is 62.1% C, 10.4% H, and 27.5% O by mass.',
+    correct: 'C3H6O',
+    distractors: ['C2H4O', 'C3H8O', 'C6H12O2'],
+    hint: 'The empirical formula is not the same as the molecular formula here.',
+  },
+  {
+    stem: 'A compound is 24.0% C, 4.0% H, and 72.0% O by mass.',
+    correct: 'CH2O3',
+    distractors: ['CH2O', 'C2H4O6', 'C2H2O3'],
+    hint: 'The ratios reduce cleanly after dividing by the smallest value.',
+  },
+];
+
+const REDOX_SCENARIOS = [
+  {
+    stem: 'Balance in acidic solution: MnO4-(aq) + Fe2+(aq) -> Mn2+(aq) + Fe3+(aq). What is the coefficient of H+(aq)?',
+    answer: 8,
+    hint: 'The balanced equation includes 8 H+ and 4 H2O.',
+  },
+  {
+    stem: 'Balance in acidic solution: Cr2O7^2-(aq) + I-(aq) -> Cr3+(aq) + I2(s). What is the coefficient of I-(aq)?',
+    answer: 6,
+    hint: 'Dichromate to Cr3+ requires 6 iodide ions.',
+  },
+  {
+    stem: 'Balance in acidic solution: NO3-(aq) + Cu(s) -> NO(g) + Cu2+(aq). What is the coefficient of Cu(s)?',
+    answer: 3,
+    hint: 'The balanced redox equation uses 3 Cu atoms.',
+  },
+  {
+    stem: 'Balance in acidic solution: MnO4-(aq) + C2O4^2-(aq) -> Mn2+(aq) + CO2(g). What is the coefficient of C2O4^2-(aq)?',
+    answer: 5,
+    hint: 'Five oxalate ions are needed in the balanced equation.',
+  },
+];
+
+const NET_IONIC_SCENARIOS = [
+  {
+    stem: 'A student mixes AgNO3(aq) and NaCl(aq), and a precipitate forms. Which is the balanced net ionic equation?',
+    correct: 'Ag+(aq) + Cl-(aq) -> AgCl(s)',
+    distractors: [
+      'Na+(aq) + NO3-(aq) -> NaNO3(s)',
+      'AgNO3(aq) + NaCl(aq) -> AgCl(aq) + NaNO3(s)',
+      'Ag+(aq) + NO3-(aq) -> AgNO3(s)',
+    ],
+    hint: 'Only the ions that make the insoluble solid stay in the net ionic equation.',
+  },
+  {
+    stem: 'A student mixes BaCl2(aq) and Na2SO4(aq), and a precipitate forms. Which is the balanced net ionic equation?',
+    correct: 'Ba2+(aq) + SO4^2-(aq) -> BaSO4(s)',
+    distractors: [
+      'Ba2+(aq) + 2Cl-(aq) -> BaCl2(s)',
+      'Na+(aq) + SO4^2-(aq) -> Na2SO4(s)',
+      'BaCl2(aq) + Na2SO4(aq) -> BaSO4(aq) + 2NaCl(s)',
+    ],
+    hint: 'Barium sulfate is the insoluble product.',
+  },
+  {
+    stem: 'A student combines HF(aq) and NaOH(aq). Which is the balanced net ionic equation?',
+    correct: 'HF(aq) + OH-(aq) -> F-(aq) + H2O(l)',
+    distractors: [
+      'HF(aq) + NaOH(aq) -> NaF(aq) + H2O(l)',
+      'H+(aq) + OH-(aq) -> H2O(l)',
+      'HF(aq) -> H+(aq) + F-(aq)',
+    ],
+    hint: 'HF is a weak acid, so keep it undissociated in the net ionic equation.',
+  },
+  {
+    stem: 'A student mixes NH3(aq) and HCl(aq). Which is the balanced net ionic equation?',
+    correct: 'NH3(aq) + H+(aq) -> NH4+(aq)',
+    distractors: [
+      'NH3(aq) + Cl-(aq) -> NH3Cl(aq)',
+      'NH3(aq) + HCl(aq) -> NH4Cl(aq)',
+      'NH3(aq) + OH-(aq) -> NH4OH(aq)',
+    ],
+    hint: 'Ammonia is a weak base that accepts H+.',
+  },
+];
+
+const CHEM_CHANGE_SCENARIOS = [
+  {
+    stem: 'Two colorless solutions are mixed. Which observation is the best evidence that a chemical change occurred?',
+    correct: 'The resulting mixture became cloudy.',
+    distractors: [
+      'The total volume was close to the sum of the initial volumes.',
+      'The solution remained colorless.',
+      'The liquids occupied the same beaker.',
+    ],
+    hint: 'Cloudiness usually means a precipitate formed.',
+  },
+  {
+    stem: 'Two clear liquids are mixed and the solution turns pale blue. Which observation is the best evidence that a chemical change occurred?',
+    correct: 'The solution changed color after mixing.',
+    distractors: [
+      'The total volume of the mixture was close to the sum of the initial volumes.',
+      'The liquids were both colorless before mixing.',
+      'The beaker stayed on the same lab bench.',
+    ],
+    hint: 'A sudden color change often indicates a new species formed.',
+  },
+  {
+    stem: 'A gas was released when two solutions were combined. Which observation is the best evidence of a chemical change?',
+    correct: 'Bubbles formed when the solutions were combined.',
+    distractors: [
+      'The total mass of the system stayed the same.',
+      'The liquid level in the beaker changed.',
+      'The solution was stirred with a glass rod.',
+    ],
+    hint: 'Gas production is a classic sign of reaction.',
+  },
+  {
+    stem: 'A student compares a solid before and after a demonstration. Which observation is most clearly physical rather than chemical?',
+    correct: 'One piece of solid substance was changed into smaller pieces.',
+    distractors: [
+      'A new yellow solid formed in the beaker.',
+      'The solution gave off heat.',
+      'The color changed from clear to blue.',
+    ],
+    hint: 'Changing size does not create a new substance.',
+  },
+];
+
+const SPECTATOR_SCENARIOS = [
+  {
+    stem: 'When AgNO3(aq) is mixed with NaCl(aq), which ions are spectators?',
+    correct: 'Na+(aq) and NO3-(aq)',
+    distractors: ['Ag+(aq) and Cl-(aq)', 'Ag+(aq) and NO3-(aq)', 'Na+(aq) and Cl-(aq)'],
+    hint: 'Spectator ions appear unchanged on both sides of the ionic equation.',
+  },
+  {
+    stem: 'When BaCl2(aq) is mixed with Na2SO4(aq), which ions are spectators?',
+    correct: 'Na+(aq) and Cl-(aq)',
+    distractors: ['Ba2+(aq) and SO4^2-(aq)', 'Ba2+(aq) and Cl-(aq)', 'Na+(aq) and SO4^2-(aq)'],
+    hint: 'The precipitate is BaSO4(s).',
+  },
+  {
+    stem: 'When HF(aq) is neutralized by NaOH(aq), which ion is a spectator?',
+    correct: 'Na+(aq)',
+    distractors: ['F-(aq)', 'H+(aq)', 'OH-(aq)'],
+    hint: 'Sodium remains in solution and does not participate in the net ionic equation.',
+  },
+  {
+    stem: 'When HCl(aq) is neutralized by NaOH(aq), which ions are spectators?',
+    correct: 'Na+(aq) and Cl-(aq)',
+    distractors: ['H+(aq) and OH-(aq)', 'Na+(aq) and OH-(aq)', 'H+(aq) and Cl-(aq)'],
+    hint: 'Strong acid and strong base dissociate completely.',
+  },
+];
+
+const HALF_CELL_PAIRS = [
+  {
+    left: { text: 'Zn2+(aq) + 2e- -> Zn(s)', E: -0.76 },
+    right: { text: 'Cu2+(aq) + 2e- -> Cu(s)', E: 0.34 },
+    answer: 1.10,
+    hint: 'Ecell = Ered(cathode) - Ered(anode) = 0.34 - (-0.76).',
+  },
+  {
+    left: { text: 'Fe2+(aq) + 2e- -> Fe(s)', E: -0.44 },
+    right: { text: 'Ag+(aq) + e- -> Ag(s)', E: 0.80 },
+    answer: 1.24,
+    hint: 'Silver is reduced and iron is oxidized.',
+  },
+  {
+    left: { text: 'I2(s) + 2e- -> 2I-(aq)', E: 0.54 },
+    right: { text: 'Cl2(g) + 2e- -> 2Cl-(aq)', E: 1.36 },
+    answer: 0.82,
+    hint: 'Use the more positive reduction potential as the cathode.',
+  },
+];
+
+const COMMON_ION_SALTS = [
+  { salt: 'AgCl', ksp: 1.8e-10, commonIon: 'NaCl', ion: 'Cl-', mode: '1:1' },
+  { salt: 'PbI2', ksp: 7.9e-9, commonIon: 'KI', ion: 'I-', mode: '1:2' },
+  { salt: 'CaF2', ksp: 3.9e-11, commonIon: 'NaF', ion: 'F-', mode: '1:2' },
+];
+
+const COMBUSTION_SCENARIOS = [
+  {
+    formula: 'C3H6O',
+    empirical: 'C3H6O',
+    sampleMass: 2.00,
+    distractors: ['C2H4O', 'C3H8O', 'C6H12O2'],
+  },
+  {
+    formula: 'C4H8O',
+    empirical: 'C4H8O',
+    sampleMass: 1.75,
+    distractors: ['C2H4O', 'C4H10O', 'C3H6O'],
+  },
+  {
+    formula: 'C2H6O',
+    empirical: 'C2H6O',
+    sampleMass: 1.50,
+    distractors: ['CH4O', 'C2H4O', 'C3H8O'],
+  },
+  {
+    formula: 'C4H8O2',
+    empirical: 'C2H4O',
+    sampleMass: 2.20,
+    distractors: ['C4H8O2', 'CH2O', 'C3H6O'],
+  },
+];
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function pick(arr) {
+  return arr[randInt(0, arr.length - 1)];
+}
+function shuffle(arr) {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+function roundTo(value, digits = 2) {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+function fmtNum(value, digits = 2) {
+  const rounded = roundTo(value, digits);
+  if (Number.isInteger(rounded)) return String(rounded);
+  return rounded.toFixed(digits).replace(/\.?0+$/, '');
+}
+function sci(value, digits = 3) {
+  if (value === 0) return '0';
+  const exp = Math.floor(Math.log10(Math.abs(value)));
+  const mant = value / (10 ** exp);
+  return mant.toFixed(Math.max(0, digits - 1)).replace(/\.?0+$/, '') + ' x 10^' + exp;
+}
+function encodeAnswer(value) {
+  return btoa(String(value));
+}
+function molarMassFromCounts(counts) {
+  return Object.entries(counts).reduce((sum, [el, count]) => sum + (ATOMIC_MASS[el] || 0) * count, 0);
+}
+function compoundMolarMass(compound) {
+  return molarMassFromCounts(compound.comp);
+}
+function waterFraction(hydrate) {
+  const waterMass = hydrate.waterCount * molarMassFromCounts({ H: 2, O: 1 });
+  return waterMass / compoundMolarMass(hydrate);
+}
+function makeNumericProblem(q, answer, unit, hint, opts = {}) {
+  return {
+    q,
+    _a: encodeAnswer(answer),
+    unit,
+    hint,
+    noUnit: !!opts.noUnit,
+    answerType: 'numeric',
+    displayDigits: opts.displayDigits == null ? 2 : opts.displayDigits,
+    tolerance: opts.tolerance,
+  };
+}
+function makeMCProblem(q, answer, hint) {
+  return {
+    q,
+    answerType: 'mc',
+    answer: answer.toUpperCase(),
+    unit: '',
+    noUnit: true,
+    hint,
+    displayDigits: 0,
+  };
+}
+function makeChoiceProblem(prompt, correct, distractors, hint) {
+  const items = shuffle([
+    { text: correct, correct: true },
+    ...distractors.map(text => ({ text, correct: false })),
+  ]);
+  const letters = ['A', 'B', 'C', 'D'];
+  const text = prompt + '\n' + items.map((item, i) => letters[i] + '. ' + item.text).join('\n');
+  return makeMCProblem(text, letters[items.findIndex(item => item.correct)], hint);
+}
+function formatExpectedNumeric(value, digits = 2) {
+  const abs = Math.abs(value);
+  if (abs !== 0 && (abs < 0.001 || abs >= 10000)) return Number(value).toExponential(2);
+  return fmtNum(value, digits);
+}
+function describeExpectedAnswer(problem) {
+  if (problem.answerType === 'mc') return problem.answer;
+  const value = decodeA(problem._a);
+  const unit = problem.unit ? ' ' + problem.unit : '';
+  return formatExpectedNumeric(value, problem.displayDigits == null ? 2 : problem.displayDigits) + unit;
+}
+const UNIT_ALIASES = {
+  m: ['m', 'mol/l', 'molar', 'molperliter', 'mol·l-1', 'moll-1'],
+  mol: ['mol'],
+  g: ['g'],
+  'g/mol': ['g/mol', 'gmol-1', 'gmol^-1', 'gpermol'],
+  ml: ['ml'],
+  l: ['l'],
+  '%': ['%', 'percent'],
+  ph: ['ph'],
+  v: ['v'],
+};
+function normalizeUnit(u) {
+  return (u || '').toLowerCase().replace(/\s+/g, '');
+}
+function unitMatches(given, expected) {
+  const g = normalizeUnit(given);
+  const e = normalizeUnit(expected);
+  if (!e) return g === '';
+  const variants = UNIT_ALIASES[e] || [e];
+  return variants.includes(g);
+}
+function stoichOutcome(rxn, molesA, molesB) {
+  const possibleA = molesA / rxn.reactants[0].coef;
+  const possibleB = molesB / rxn.reactants[1].coef;
+  const factor = Math.min(possibleA, possibleB);
+  const limiting = possibleA <= possibleB ? 0 : 1;
+  return {
+    productMoles: factor * rxn.product.coef,
+    leftoverA: molesA - factor * rxn.reactants[0].coef,
+    leftoverB: molesB - factor * rxn.reactants[1].coef,
+    limiting,
+    factor,
+  };
+}
+function numericTol(problem, correct) {
+  if (problem.tolerance != null) return problem.tolerance;
+  if (Math.abs(correct) >= 1) return Math.max(Math.abs(correct) * 0.02, 0.05);
+  return Math.max(Math.abs(correct) * 0.05, 1e-10);
+}
+
+function buildParticlesProblem() {
+  const item = pick(COMPOUNDS);
+  const mult = pick([0.25, 0.50, 0.75, 1.25, 1.50, 2.00, 2.50, 3.00]);
+  const count = mult * 6.022e23;
+  return makeNumericProblem(
+    `How many moles are in ${sci(count, 3)} formula units of ${item.formula}?\n(Avogadro's number = 6.022 x 10^23 /mol)`,
+    mult,
+    'mol',
+    `${sci(count, 3)} / 6.022 x 10^23 = ${fmtNum(mult, 2)} mol`,
+    { displayDigits: 2, tolerance: 0.02 }
+  );
+}
+function buildMoleMassProblem() {
+  const item = pick(COMPOUNDS.filter(c => c.formula !== 'CuSO4·5H2O'));
+  const askMass = Math.random() < 0.5;
+  const moles = pick([0.125, 0.250, 0.375, 0.500, 0.625, 0.750, 1.250, 1.500]);
+  const mm = compoundMolarMass(item);
+  if (askMass) {
+    const grams = roundTo(moles * mm, 2);
+    return makeNumericProblem(
+      `What mass is present in ${fmtNum(moles, 3)} mol of ${item.formula}?`,
+      grams,
+      'g',
+      `${fmtNum(moles, 3)} mol x ${fmtNum(mm, 2)} g/mol = ${fmtNum(grams, 2)} g`,
+      { displayDigits: 2, tolerance: Math.max(grams * 0.02, 0.05) }
+    );
+  }
+  const grams = roundTo(moles * mm, 2);
+  return makeNumericProblem(
+    `How many moles are in ${fmtNum(grams, 2)} g of ${item.formula}?`,
+    moles,
+    'mol',
+    `${fmtNum(grams, 2)} g / ${fmtNum(mm, 2)} g/mol = ${fmtNum(moles, 3)} mol`,
+    { displayDigits: 3, tolerance: 0.02 }
+  );
+}
+function buildMolarMassProblem() {
+  const item = pick(COMPOUNDS);
+  const mm = roundTo(compoundMolarMass(item), 2);
+  return makeNumericProblem(
+    `What is the molar mass of ${item.formula}?`,
+    mm,
+    'g/mol',
+    `Add the atomic masses from the formula to get ${fmtNum(mm, 2)} g/mol`,
+    { displayDigits: 2, tolerance: Math.max(mm * 0.02, 0.05) }
+  );
+}
+function buildHydrateProblem() {
+  const hydrate = pick(HYDRATES);
+  const sampleMass = pick([1.50, 2.00, 2.50, 3.00, 4.50, 6.00, 7.50]);
+  const waterMass = roundTo(sampleMass * waterFraction(hydrate), 2);
+  return makeNumericProblem(
+    `How many grams of H2O are present in ${fmtNum(sampleMass, 2)} g of ${hydrate.formula}?`,
+    waterMass,
+    'g',
+    `Water is ${fmtNum(waterFraction(hydrate) * 100, 1)}% of the hydrate by mass`,
+    { displayDigits: 2, tolerance: Math.max(waterMass * 0.02, 0.05) }
+  );
+}
+function buildEmpiricalFormulaProblem() {
+  const scenario = pick(EMPIRICAL_SCENARIOS);
+  return makeChoiceProblem(
+    `A student analyzes an unknown compound.\n${scenario.stem}\nWhich empirical formula is most consistent with the data?`,
+    scenario.correct,
+    scenario.distractors,
+    scenario.hint
+  );
+}
+function buildStoichProductProblem() {
+  const rxn = pick(STOICH_RXNS);
+  const limIndex = randInt(0, 1);
+  const limAmount = pick([0.40, 0.50, 0.60, 0.75, 0.80, 1.00, 1.20, 1.50]);
+  const otherNeed = limAmount * rxn.reactants[1 - limIndex].coef / rxn.reactants[limIndex].coef;
+  const otherAmount = roundTo(otherNeed * pick([1.30, 1.50, 1.75, 2.00]), 2);
+  const a = limIndex === 0 ? limAmount : otherAmount;
+  const b = limIndex === 0 ? otherAmount : limAmount;
+  const outcome = stoichOutcome(rxn, a, b);
+  const askMass = Math.random() < 0.5;
+  if (askMass) {
+    const grams = roundTo(outcome.productMoles * rxn.product.mm, 2);
+    return makeNumericProblem(
+      `${rxn.equation}\nIf ${fmtNum(a, 2)} mol ${rxn.reactants[0].formula} reacts with ${fmtNum(b, 2)} mol ${rxn.reactants[1].formula}, how many grams of ${rxn.product.formula} are produced?`,
+      grams,
+      'g',
+      `The limiting reactant produces ${fmtNum(outcome.productMoles, 3)} mol of product, which is ${fmtNum(grams, 2)} g`,
+      { displayDigits: 2, tolerance: Math.max(grams * 0.03, 0.05) }
+    );
+  }
+  return makeNumericProblem(
+    `${rxn.equation}\nIf ${fmtNum(a, 2)} mol ${rxn.reactants[0].formula} reacts with ${fmtNum(b, 2)} mol ${rxn.reactants[1].formula}, how many mol of ${rxn.product.formula} are produced?`,
+    roundTo(outcome.productMoles, 3),
+    'mol',
+    `Use the limiting reactant and the mole ratio from the balanced equation`,
+    { displayDigits: 3, tolerance: 0.02 }
+  );
+}
+function buildStoichLeftoverProblem() {
+  const rxn = pick(STOICH_RXNS);
+  const limIndex = randInt(0, 1);
+  const limAmount = pick([0.40, 0.50, 0.60, 0.75, 0.80, 1.00, 1.20]);
+  const otherNeed = limAmount * rxn.reactants[1 - limIndex].coef / rxn.reactants[limIndex].coef;
+  const otherAmount = roundTo(otherNeed * pick([1.35, 1.60, 1.90, 2.25]), 2);
+  const a = limIndex === 0 ? limAmount : otherAmount;
+  const b = limIndex === 0 ? otherAmount : limAmount;
+  const outcome = stoichOutcome(rxn, a, b);
+  const leftoverIndex = outcome.limiting === 0 ? 1 : 0;
+  const leftover = leftoverIndex === 0 ? outcome.leftoverA : outcome.leftoverB;
+  return makeNumericProblem(
+    `${rxn.equation}\nIf ${fmtNum(a, 2)} mol ${rxn.reactants[0].formula} reacts with ${fmtNum(b, 2)} mol ${rxn.reactants[1].formula}, how many mol of the excess reactant remain?`,
+    roundTo(leftover, 3),
+    'mol',
+    `The excess reactant is ${rxn.reactants[leftoverIndex].formula}, and ${fmtNum(leftover, 3)} mol remain`,
+    { displayDigits: 3, tolerance: 0.02 }
+  );
+}
+function buildPrecipitationMassProblem() {
+  const rxn = pick(PRECIP_RXNS);
+  const limIndex = randInt(0, 1);
+  const limM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+  const limV = pick([25.0, 30.0, 40.0, 50.0, 60.0, 75.0, 100.0]);
+  const limMoles = limM * limV / 1000;
+  const otherNeed = limMoles * rxn.reactants[1 - limIndex].coef / rxn.reactants[limIndex].coef;
+  const otherM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+  const otherV = roundTo((otherNeed * pick([1.40, 1.65, 1.90, 2.20])) / otherM * 1000, 1);
+  const m1 = limIndex === 0 ? limM : otherM;
+  const v1 = limIndex === 0 ? limV : otherV;
+  const m2 = limIndex === 0 ? otherM : limM;
+  const v2 = limIndex === 0 ? otherV : limV;
+  const n1 = m1 * v1 / 1000;
+  const n2 = m2 * v2 / 1000;
+  const outcome = stoichOutcome(rxn, n1, n2);
+  const grams = roundTo(outcome.productMoles * rxn.product.mm, 2);
+  return makeNumericProblem(
+    `${rxn.equation}\nIf ${fmtNum(v1, 1)} mL of ${fmtNum(m1, 3)} M ${rxn.reactants[0].formula} is mixed with ${fmtNum(v2, 1)} mL of ${fmtNum(m2, 3)} M ${rxn.reactants[1].formula}, how many grams of ${rxn.product.formula}(s) form?`,
+    grams,
+    'g',
+    `Find moles of each reactant, identify the limiting one, then convert the product to grams`,
+    { displayDigits: 2, tolerance: Math.max(grams * 0.03, 0.05) }
+  );
+}
+function buildPercentYieldProblem() {
+  const askActual = Math.random() < 0.5;
+  if (askActual) {
+    const theoretical = pick([18.0, 24.0, 36.0, 40.0, 50.0, 60.0, 75.0, 90.0]);
+    const percent = pick([68.0, 72.0, 75.0, 80.0, 84.0, 88.0, 92.5]);
+    const actual = roundTo(theoretical * percent / 100, 2);
+    return makeNumericProblem(
+      `A reaction has a theoretical yield of ${fmtNum(theoretical, 1)} g.\nIf the percent yield is ${fmtNum(percent, 1)}%, what is the actual yield?`,
+      actual,
+      'g',
+      `Actual yield = theoretical yield x percent yield`,
+      { displayDigits: 2, tolerance: Math.max(actual * 0.02, 0.05) }
+    );
+  }
+  const actual = pick([12.0, 18.0, 24.0, 30.0, 42.0, 56.0]);
+  const theoretical = pick([24.0, 30.0, 40.0, 50.0, 60.0, 75.0]);
+  const percent = roundTo(actual / theoretical * 100, 1);
+  return makeNumericProblem(
+    `A reaction has an actual yield of ${fmtNum(actual, 1)} g and a theoretical yield of ${fmtNum(theoretical, 1)} g.\nWhat is the percent yield?`,
+    percent,
+    '%',
+    `Percent yield = (actual / theoretical) x 100`,
+    { displayDigits: 1, tolerance: 0.5 }
+  );
+}
+function buildMolarityMassProblem() {
+  const item = pick(COMPOUNDS.filter(c => c.formula !== 'CuSO4·5H2O'));
+  const mm = compoundMolarMass(item);
+  const askMolarity = Math.random() < 0.5;
+  if (askMolarity) {
+    const mass = pick([8.40, 12.5, 14.8, 18.2, 22.5, 27.0, 31.8]);
+    const volume = pick([125.0, 150.0, 200.0, 250.0, 300.0, 500.0]);
+    const m = roundTo((mass / mm) / (volume / 1000), 3);
+    return makeNumericProblem(
+      `What is the molarity of a solution made by dissolving ${fmtNum(mass, 2)} g of ${item.formula} in enough water to make ${fmtNum(volume, 1)} mL of solution?`,
+      m,
+      'M',
+      `M = moles / liters = (${fmtNum(mass, 2)} / ${fmtNum(mm, 2)}) / ${fmtNum(volume / 1000, 3)}`,
+      { displayDigits: 3, tolerance: Math.max(m * 0.03, 0.005) }
+    );
+  }
+  const m = pick([0.250, 0.500, 0.750, 1.000, 1.250, 1.500, 2.000]);
+  const volume = pick([100.0, 150.0, 200.0, 250.0, 300.0, 500.0]);
+  const grams = roundTo(m * (volume / 1000) * mm, 2);
+  return makeNumericProblem(
+    `How many grams of ${item.formula} are needed to prepare ${fmtNum(volume, 1)} mL of a ${fmtNum(m, 3)} M solution?`,
+    grams,
+    'g',
+    `grams = M x L x molar mass = ${fmtNum(m, 3)} x ${fmtNum(volume / 1000, 3)} x ${fmtNum(mm, 2)}`,
+    { displayDigits: 2, tolerance: Math.max(grams * 0.03, 0.05) }
+  );
+}
+function buildDilutionProblem() {
+  const askFinal = Math.random() < 0.5;
+  if (askFinal) {
+    const m1 = pick([1.20, 1.50, 2.00, 2.40, 3.00, 3.50]);
+    const v1 = pick([20.0, 25.0, 30.0, 40.0, 50.0]);
+    const v2 = pick([150.0, 200.0, 250.0, 300.0, 400.0]);
+    const m2 = roundTo(m1 * v1 / v2, 3);
+    return makeNumericProblem(
+      `${fmtNum(v1, 1)} mL of a ${fmtNum(m1, 2)} M stock solution is diluted to ${fmtNum(v2, 1)} mL.\nWhat is the new molarity?`,
+      m2,
+      'M',
+      `Use M1V1 = M2V2`,
+      { displayDigits: 3, tolerance: Math.max(m2 * 0.03, 0.005) }
+    );
+  }
+  const m1 = pick([0.50, 0.75, 1.00, 1.50, 2.00, 2.50]);
+  const v1 = pick([25.0, 40.0, 50.0, 75.0]);
+  const m2 = pick([0.15, 0.20, 0.25, 0.30, 0.40, 0.50]);
+  const v2 = roundTo(m1 * v1 / m2, 1);
+  return makeNumericProblem(
+    `What volume of a ${fmtNum(m1, 2)} M stock solution is needed to prepare ${fmtNum(v1, 1)} mL of a ${fmtNum(m2, 2)} M diluted solution?`,
+    v2,
+    'mL',
+    `Use M1V1 = M2V2 and solve for the stock volume`,
+    { displayDigits: 1, tolerance: Math.max(v2 * 0.03, 0.1) }
+  );
+}
+function buildTitrationProblem() {
+  const acidOptions = [
+    { acid: 'H2SO4', base: 'NaOH', ratio: 2, acidMM: 98.08, baseMM: 40.00, acidCoef: 1, baseCoef: 2 },
+    { acid: 'H3PO4', base: 'KOH', ratio: 3, acidMM: 98.00, baseMM: 56.11, acidCoef: 1, baseCoef: 3 },
+    { acid: 'Ba(OH)2', base: 'HCl', ratio: 2, acidMM: 171.34, baseMM: 36.46, acidCoef: 1, baseCoef: 2 },
+  ];
+  const t = pick(acidOptions);
+  const askBase = Math.random() < 0.5;
+  if (askBase) {
+    const acidM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+    const acidV = pick([15.0, 20.0, 25.0, 30.0, 40.0]);
+    const baseM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+    const baseV = roundTo((acidM * acidV / 1000) * t.ratio / baseM * 1000, 1);
+    return makeNumericProblem(
+      `How many mL of ${fmtNum(baseM, 3)} M ${t.base} are required to neutralize ${fmtNum(acidV, 1)} mL of ${fmtNum(acidM, 3)} M ${t.acid}?`,
+      baseV,
+      'mL',
+      `Convert the acid volume to moles, apply the stoichiometric ratio, then divide by the base molarity`,
+      { displayDigits: 1, tolerance: Math.max(baseV * 0.03, 0.1) }
+    );
+  }
+  const baseM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+  const baseV = pick([20.0, 25.0, 30.0, 40.0, 50.0]);
+  const acidM = pick([0.100, 0.125, 0.150, 0.200, 0.250]);
+  const acidV = roundTo((baseM * baseV / 1000) / t.ratio / acidM * 1000, 1);
+  return makeNumericProblem(
+    `What volume of ${fmtNum(acidM, 3)} M ${t.acid} is required to neutralize ${fmtNum(baseV, 1)} mL of ${fmtNum(baseM, 3)} M ${t.base}?`,
+    acidV,
+    'mL',
+    `Use the balanced equation's mole ratio before applying M = mol/L`,
+    { displayDigits: 1, tolerance: Math.max(acidV * 0.03, 0.1) }
+  );
+}
+function buildMassPercentDensityProblem() {
+  const solutes = [
+    { solute: 'HCl', mm: 36.46 },
+    { solute: 'HNO3', mm: 63.01 },
+    { solute: 'NaOH', mm: 40.00 },
+    { solute: 'H2SO4', mm: 98.08 },
+  ];
+  const item = pick(solutes);
+  const percent = pick([6.0, 9.0, 12.0, 18.0, 24.0]);
+  const density = pick([1.02, 1.06, 1.10, 1.18, 1.22]);
+  const solMassPerL = density * 1000;
+  const soluteMass = solMassPerL * percent / 100;
+  const M = roundTo((soluteMass / item.mm), 3);
+  return makeNumericProblem(
+    `What is the molarity of a ${fmtNum(percent, 1)}% (w/w) ${item.solute} solution with a density of ${fmtNum(density, 2)} g/mL?`,
+    M,
+    'M',
+    `Assume 1.00 L of solution, then convert mass percent to moles`,
+    { displayDigits: 3, tolerance: Math.max(M * 0.03, 0.005) }
+  );
+}
+function buildMixingSolutionsProblem() {
+  const item = pick(['NaCl', 'HCl', 'KNO3', 'NaOH', 'CaCl2']);
+  const m1 = pick([0.100, 0.150, 0.200, 0.250, 0.300, 0.400]);
+  const v1 = pick([50.0, 75.0, 100.0, 125.0, 150.0, 200.0]);
+  const m2 = pick([0.400, 0.500, 0.600, 0.750, 1.000, 1.250]);
+  const v2 = pick([25.0, 40.0, 50.0, 60.0, 75.0, 100.0]);
+  const finalM = roundTo((m1 * v1 + m2 * v2) / (v1 + v2), 3);
+  return makeNumericProblem(
+    `${fmtNum(v1, 1)} mL of ${fmtNum(m1, 3)} M ${item} is mixed with ${fmtNum(v2, 1)} mL of ${fmtNum(m2, 3)} M ${item}.\nWhat is the final molarity after mixing?`,
+    finalM,
+    'M',
+    `Add the moles from both solutions, then divide by the total volume`,
+    { displayDigits: 3, tolerance: Math.max(finalM * 0.03, 0.005) }
+  );
+}
+function buildWeakAcidPH() {
+  const acid = pick(ACIDS);
+  const C = pick([0.080, 0.100, 0.150, 0.200, 0.250, 0.400]);
+  const h = Math.sqrt(acid.Ka * C);
+  const pH = roundTo(-Math.log10(h), 2);
+  return makeNumericProblem(
+    `What is the pH of a ${fmtNum(C, 3)} M solution of ${acid.name}?\n(${acid.name} has Ka = ${sci(acid.Ka, 2)})`,
+    pH,
+    '',
+    `For a weak acid, [H+] ≈ sqrt(Ka x C) = ${formatExpectedNumeric(h, 3)} M`,
+    { noUnit: true, displayDigits: 2, tolerance: 0.05 }
+  );
+}
+function buildBufferPH() {
+  const buffer = pick(BUFFERS);
+  const acidMoles = pick([0.10, 0.12, 0.15, 0.20, 0.25, 0.30, 0.40]);
+  const ratio = pick([0.25, 0.50, 2.00, 4.00]);
+  const baseMoles = roundTo(acidMoles * ratio, 3);
+  const pH = roundTo(buffer.pKa + Math.log10(baseMoles / acidMoles), 2);
+  return makeNumericProblem(
+    `A buffer contains ${fmtNum(acidMoles, 3)} mol ${buffer.acid} and ${fmtNum(baseMoles, 3)} mol ${buffer.base} in 1.00 L of solution.\nWhat is the pH? (pKa = ${fmtNum(buffer.pKa, 2)})`,
+    pH,
+    '',
+    `Use Henderson-Hasselbalch: pH = pKa + log(base/acid)`,
+    { noUnit: true, displayDigits: 2, tolerance: 0.05 }
+  );
+}
+function buildKspSolubility() {
+  const item = pick(COMMON_ION_SALTS);
+  const commonConc = pick([0.050, 0.100, 0.150, 0.200]);
+  let solubility;
+  if (item.mode === '1:1') {
+    solubility = roundTo(item.ksp / commonConc, 10);
+  } else {
+    solubility = roundTo(item.ksp / (commonConc ** 2), 10);
+  }
+  return makeNumericProblem(
+    `What is the molar solubility of ${item.salt} in ${fmtNum(commonConc, 3)} M ${item.commonIon} solution?\n(Ksp = ${sci(item.ksp, 2)})`,
+    solubility,
+    'M',
+    `The common ion suppresses solubility, so substitute the common-ion concentration into the Ksp expression`,
+    { displayDigits: 3, tolerance: Math.max(solubility * 0.12, 1e-10) }
+  );
+}
+function buildPercentIonization() {
+  const acid = pick(ACIDS.slice(0, 3));
+  const C = pick([0.080, 0.100, 0.150, 0.200, 0.250]);
+  const h = Math.sqrt(acid.Ka * C);
+  const percent = roundTo(h / C * 100, 2);
+  return makeNumericProblem(
+    `What is the percent ionization of a ${fmtNum(C, 3)} M solution of ${acid.name}?`,
+    percent,
+    '%',
+    `percent ionization = ([H+] / C) x 100`,
+    { displayDigits: 2, tolerance: 0.1 }
+  );
+}
+function buildOxStateProblem() {
+  const scenarios = [
+    { stem: 'What is the oxidation state of Mn in MnO4-(aq)?', answer: 7, hint: '4 oxygens at -2 each and an overall -1 charge give Mn = +7.' },
+    { stem: 'What is the oxidation state of Cr in Cr2O7^2-(aq)?', answer: 6, hint: '2Cr + 7(-2) = -2, so each Cr is +6.' },
+    { stem: 'What is the oxidation state of N in NH4+(aq)?', answer: -3, hint: 'N + 4(+1) = +1, so N = -3.' },
+    { stem: 'What is the oxidation state of S in SO3^2-(aq)?', answer: 4, hint: 'S + 3(-2) = -2, so S = +4.' },
+    { stem: 'What is the oxidation state of Cl in ClO3-(aq)?', answer: 5, hint: 'Cl + 3(-2) = -1, so Cl = +5.' },
+  ];
+  const s = pick(scenarios);
+  return makeNumericProblem(s.stem, s.answer, '', s.hint, { noUnit: true, displayDigits: 0, tolerance: 0 });
+}
+function buildNetIonicProblem() {
+  const s = pick(NET_IONIC_SCENARIOS);
+  return makeChoiceProblem(s.stem, s.correct, s.distractors, s.hint);
+}
+function buildChemicalChangeProblem() {
+  const s = pick(CHEM_CHANGE_SCENARIOS);
+  return makeChoiceProblem(s.stem, s.correct, s.distractors, s.hint);
+}
+function buildSpectatorIonProblem() {
+  const s = pick(SPECTATOR_SCENARIOS);
+  return makeChoiceProblem(s.stem, s.correct, s.distractors, s.hint);
+}
+function buildRedoxCoeffProblem() {
+  const s = pick(REDOX_SCENARIOS);
+  return makeNumericProblem(s.stem, s.answer, '', s.hint, { noUnit: true, displayDigits: 0, tolerance: 0 });
+}
+function buildCellPotentialProblem() {
+  const pair = pick(HALF_CELL_PAIRS);
+  return makeNumericProblem(
+    `Given these standard reduction potentials:\n${pair.left.text}   E° = ${fmtNum(pair.left.E, 2)} V\n${pair.right.text}   E° = ${fmtNum(pair.right.E, 2)} V\nWhat is E°cell for the spontaneous reaction?`,
+    pair.answer,
+    'V',
+    pair.hint,
+    { displayDigits: 2, tolerance: 0.03 }
+  );
+}
+function buildWeakAcidTitrationProblem() {
+  const acid = pick([
+    { name: 'HC2H3O2', pKa: 4.74 },
+    { name: 'HF', pKa: 3.17 },
+    { name: 'HNO2', pKa: 3.35 },
+  ]);
+  const acidM = pick([0.100, 0.150, 0.200, 0.250]);
+  const acidV = pick([25.0, 30.0, 40.0, 50.0]);
+  const baseM = pick([0.100, 0.125, 0.150, 0.200]);
+  const equivalenceV = acidM * acidV / baseM;
+  const addedV = roundTo(equivalenceV * pick([0.25, 0.40, 0.50, 0.65, 0.80]), 1);
+  const molesHA = acidM * acidV / 1000;
+  const molesOH = baseM * addedV / 1000;
+  const molesA = molesOH;
+  const molesLeft = molesHA - molesOH;
+  const pH = roundTo(acid.pKa + Math.log10(molesA / molesLeft), 2);
+  return makeNumericProblem(
+    `${fmtNum(acidV, 1)} mL of ${fmtNum(acidM, 3)} M ${acid.name} is titrated with ${fmtNum(baseM, 3)} M NaOH.\nAfter ${fmtNum(addedV, 1)} mL of base is added, what is the pH? (pKa = ${fmtNum(acid.pKa, 2)})`,
+    pH,
+    '',
+    `After neutralization, use the buffer formed by the weak acid and its conjugate base`,
+    { noUnit: true, displayDigits: 2, tolerance: 0.05 }
+  );
+}
+function buildCommonIonSolubilityProblem() {
+  const item = pick(COMMON_ION_SALTS);
+  const commonConc = pick([0.050, 0.100, 0.150, 0.200]);
+  let solubility;
+  if (item.mode === '1:1') {
+    solubility = roundTo(item.ksp / commonConc, 10);
+  } else {
+    solubility = roundTo(item.ksp / (commonConc ** 2), 10);
+  }
+  return makeNumericProblem(
+    `What is the molar solubility of ${item.salt} in ${fmtNum(commonConc, 3)} M ${item.commonIon}?\n(Ksp = ${sci(item.ksp, 2)})`,
+    solubility,
+    'M',
+    `Write the Ksp expression and replace the common ion with its initial concentration`,
+    { displayDigits: 3, tolerance: Math.max(solubility * 0.12, 1e-10) }
+  );
+}
+function buildCombustionEmpiricalProblem() {
+  const s = pick(COMBUSTION_SCENARIOS);
+  const mm = s.formula === 'C4H8O2' ? 88.00 : (s.formula === 'C4H8O' ? 72.11 : (s.formula === 'C2H6O' ? 46.07 : 58.08));
+  const molesSample = s.sampleMass / mm;
+  const cCount = parseInt(s.formula.match(/^C(\d*)/)[1] || '1', 10);
+  const hCountMatch = s.formula.match(/H(\d+)/);
+  const hCount = hCountMatch ? parseInt(hCountMatch[1], 10) : 0;
+  const molCO2 = molesSample * cCount;
+  const molH2O = molesSample * hCount / 2;
+  const co2Mass = roundTo(molCO2 * 44.01, 2);
+  const h2oMass = roundTo(molH2O * 18.015, 2);
+  return makeChoiceProblem(
+    `A ${fmtNum(s.sampleMass, 2)} g sample of an unknown compound containing only C, H, and O is combusted completely.\nIt produces ${fmtNum(co2Mass, 2)} g CO2 and ${fmtNum(h2oMass, 2)} g H2O.\nWhat is the empirical formula?`,
+    s.empirical,
+    s.distractors,
+    'Use combustion data to find the C:H ratio, then infer the empirical formula'
+  );
+}
+
+const PROBLEM_BUILDERS = [
+  [
+    buildParticlesProblem,
+    buildMoleMassProblem,
+    buildMolarMassProblem,
+    buildHydrateProblem,
+    buildEmpiricalFormulaProblem,
+  ],
+  [
+    buildStoichProductProblem,
+    buildStoichLeftoverProblem,
+    buildPrecipitationMassProblem,
+    buildPercentYieldProblem,
+  ],
+  [
+    buildMolarityMassProblem,
+    buildDilutionProblem,
+    buildTitrationProblem,
+    buildMassPercentDensityProblem,
+    buildMixingSolutionsProblem,
+  ],
+  [
+    buildWeakAcidPH,
+    buildBufferPH,
+    buildKspSolubility,
+    buildPercentIonization,
+  ],
+  [
+    buildOxStateProblem,
+    buildNetIonicProblem,
+    buildChemicalChangeProblem,
+    buildSpectatorIonProblem,
+    buildRedoxCoeffProblem,
+  ],
+  [
+    buildCellPotentialProblem,
+    buildWeakAcidTitrationProblem,
+    buildCommonIonSolubilityProblem,
+    buildCombustionEmpiricalProblem,
+    buildRedoxCoeffProblem,
+  ],
+];
+
+const ENEMY_TEMPLATES = [
+  { name: 'MOLE SCOUT',       sprite: 'MOLE_SCOUT',      hp: 12, zone: 0, damage: 3, color: '#a16207' },
+  { name: 'ION GUARD',        sprite: 'ION_GUARD',       hp: 12, zone: 0, damage: 3, color: '#3b82f6' },
+  { name: 'MOLECULE MAGE',    sprite: 'MOLECULE_MAGE',   hp: 15, zone: 0, damage: 4, color: '#7c3aed' },
+  { name: 'REAGENT WARDEN',   sprite: 'REAGENT_WARDEN',  hp: 15, zone: 1, damage: 4, color: '#78716c' },
+  { name: 'RATIO RANGER',     sprite: 'RATIO_RANGER',    hp: 15, zone: 1, damage: 4, color: '#15803d' },
+  { name: 'LIMITING LICH',    sprite: 'LIMITING_LICH',   hp: 18, zone: 1, damage: 5, color: '#1e293b' },
+  { name: 'YIELD WATCHER',    sprite: 'YIELD_WATCHER',   hp: 18, zone: 2, damage: 5, color: '#dc2626' },
+  { name: 'PERCENT PHANTOM',  sprite: 'PERCENT_PHANTOM', hp: 20, zone: 2, damage: 5, color: '#fecaca' },
+  { name: 'ACTUAL ALCHEMIST', sprite: 'ACTUAL_ALCHEMIST',hp: 20, zone: 2, damage: 6, color: '#9a3412' },
+  { name: 'MOLARITY MONK',    sprite: 'MOLARITY_MONK',   hp: 20, zone: 3, damage: 6, color: '#a855f7' },
+  { name: 'DILUTION DRAKE',   sprite: 'DILUTION_DRAKE',  hp: 22, zone: 3, damage: 6, color: '#0ea5e9' },
+  { name: 'SOLUTION SAGE',    sprite: 'SOLUTION_SAGE',   hp: 25, zone: 3, damage: 7, color: '#581c87' },
+  { name: 'REDOX RIDER',      sprite: 'REDOX_RIDER',     hp: 25, zone: 4, damage: 7, color: '#dc2626' },
+  { name: 'IONIC INFERNO',    sprite: 'IONIC_INFERNO',   hp: 28, zone: 4, damage: 8, color: '#f97316' },
+  { name: 'CATALYST CRUSHER', sprite: 'IONIC_INFERNO',   hp: 30, zone: 4, damage: 9, color: '#7c2d12' },
+];
+
+const BOSS = {
+  name: 'MR. STEWART',
+  sprite: 'MR_STEWART',
+  hp: 50, damage: 12, color: '#9ca3af', boss: true,
+  zone: 5, // boss room
+};
+
+const ENEMY_POSITIONS = [
+  { ex: 2, ey: 1 }, { ex: 2, ey: 6 }, { ex: 1, ey: 4 },
+  { ex: 5, ey: 1 }, { ex: 6, ey: 6 }, { ex: 5, ey: 4 },
+  { ex: 9, ey: 1 }, { ex: 10, ey: 6 }, { ex: 9, ey: 4 },
+  { ex: 13, ey: 1 }, { ex: 14, ey: 6 }, { ex: 13, ey: 4 },
+  { ex: 17, ey: 1 }, { ex: 18, ey: 5 }, { ex: 19, ey: 7 },
+];
+
+let state = {
+  px: 0, py: 4,
+  // For smooth render interpolation
+  rx: 0, ry: 4,
+  facing: 1,
+  playerHP: 45, playerMaxHP: 45,
+  kills: 0, enemies: [],
+  inBattle: false, currentEnemy: null,
+  currentProblem: null, answering: true,
+  combo: 0,
+  t: 0,
+  inBossRoom: false,
+  bossDefeated: false,
+  boss: null,
+  devUnlock: false, // unlock all zones via cheat
+  bossRoomEntered: false,
+};
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function getZone(col) {
+  if (col < 4)  return 0;
+  if (col < 8)  return 1;
+  if (col < 12) return 2;
+  if (col < 16) return 3;
+  return 4;
+}
+function getMaxUnlockedZone() {
+  if (state.devUnlock) return 5; // includes boss room
+  if (!state.enemies.length) return 0;
+  for (let z = 3; z >= 0; z--) {
+    if (state.enemies.filter(e => e.zone === z).every(e => !e.alive)) return z + 1;
+  }
+  return 0;
+}
+function isAllZonesCleared() {
+  return state.enemies.length && state.enemies.every(e => !e.alive);
+}
+function shake(el, big) {
+  el.classList.remove('shake', 'shake-big');
+  void el.offsetWidth;
+  el.classList.add(big ? 'shake-big' : 'shake');
+}
+function flashScreen() {
+  const f = document.getElementById('flash-layer');
+  f.classList.remove('flash');
+  void f.offsetWidth;
+  f.classList.add('flash');
+}
+
+// Particles
+function spawnParticles(x, y, opts = {}) {
+  const layer = document.getElementById('particle-layer');
+  const count = opts.count || 20;
+  const colors = opts.colors || ['#fbbf24', '#f59e0b', '#ef4444'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 4 + Math.random() * 10;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 100 + Math.random() * 250;
+    const dx = Math.cos(angle) * speed;
+    const dy = Math.sin(angle) * speed - 100;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.transition = 'transform 0.8s cubic-bezier(.22,1,.36,1), opacity 0.8s';
+    if (opts.shape === 'square') p.style.borderRadius = '2px';
+    layer.appendChild(p);
+    requestAnimationFrame(() => {
+      p.style.transform = `translate(${dx}px, ${dy + 400}px) rotate(${Math.random() * 720}deg)`;
+      p.style.opacity = '0';
+    });
+    setTimeout(() => p.remove(), 900);
+  }
+}
+
+function spawnDamageNumber(targetEl, amount, type) {
+  const rect = targetEl.getBoundingClientRect();
+  const num = document.createElement('div');
+  num.className = 'dmg-num dmg-' + type;
+  num.textContent = '-' + amount;
+  num.style.left = (rect.left + rect.width / 2) + 'px';
+  num.style.top = (rect.top + rect.height / 3) + 'px';
+  num.style.position = 'fixed';
+  document.body.appendChild(num);
+  setTimeout(() => num.remove(), 1000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('map-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function updateZoneBadges() {
+  const max = getMaxUnlockedZone();
+  const cur = getZone(state.px);
+  const shortNames = ['Z1','Z2','Z3','Z4','Z5'];
+  for (let z = 0; z <= 4; z++) {
+    const badge = document.getElementById('badge-z' + z);
+    if (z > max) {
+      badge.className = 'zone-badge locked';
+      badge.textContent = shortNames[z] + ' 🔒';
+    } else {
+      const done = state.enemies.length && state.enemies.filter(e => e.zone === z).every(e => !e.alive);
+      badge.className = 'zone-badge ' + (done ? 'cleared' : (z === cur ? 'active' : 'unlocked'));
+      badge.textContent = shortNames[z] + (done ? ' ✓' : '');
+    }
+  }
+}
+
+function initEnemies() {
+  state.enemies = ENEMY_TEMPLATES.map((t, i) => ({
+    ...t, ...ENEMY_POSITIONS[i], id: i, alive: true, currentHP: t.hp,
+    bobPhase: Math.random() * Math.PI * 2,
+  }));
+}
+
+// ============================================================
+//  CANVAS RENDERING
+// ============================================================
+const tileBgCache = {};
+
+function getTileBg(z, c, r) {
+  const k = `${z}-${c}-${r}`;
+  if (tileBgCache[k]) return tileBgCache[k];
+  // pseudo-random shade variation
+  const seed = (c * 31 + r * 17 + z) % 7;
+  tileBgCache[k] = seed;
+  return seed;
+}
+
+function renderEnemyOnCanvas(e, t) {
+  const x = e.ex * TILE, y = e.ey * TILE;
+  const bob = Math.sin(t * 0.003 + e.bobPhase) * 3;
+
+  // shadow
+  ctx.fillStyle = 'rgba(26,21,48,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(x + TILE/2, y + TILE - 6, 16, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // boss aura
+  if (e.boss) {
+    const auraR = 20 + Math.sin(t * 0.005) * 4;
+    const grad = ctx.createRadialGradient(x + TILE/2, y + TILE/2 + bob, 0, x + TILE/2, y + TILE/2 + bob, auraR);
+    grad.addColorStop(0, 'rgba(251,191,36,0.5)');
+    grad.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - 8, y - 8, TILE + 16, TILE + 16);
+  }
+
+  // body circle
+  ctx.fillStyle = e.color;
+  ctx.strokeStyle = '#1a1530';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(x + TILE/2, y + TILE/2 + bob, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // simple face
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(x + TILE/2 - 4, y + TILE/2 + bob - 2, 3, 0, Math.PI * 2);
+  ctx.arc(x + TILE/2 + 4, y + TILE/2 + bob - 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#1a1530';
+  ctx.beginPath();
+  ctx.arc(x + TILE/2 - 4, y + TILE/2 + bob - 1, 1.5, 0, Math.PI * 2);
+  ctx.arc(x + TILE/2 + 4, y + TILE/2 + bob - 1, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // boss crown
+  if (e.boss) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.strokeStyle = '#1a1530';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + TILE/2 - 8, y + TILE/2 + bob - 12);
+    ctx.lineTo(x + TILE/2 - 6, y + TILE/2 + bob - 18);
+    ctx.lineTo(x + TILE/2 - 3, y + TILE/2 + bob - 14);
+    ctx.lineTo(x + TILE/2, y + TILE/2 + bob - 20);
+    ctx.lineTo(x + TILE/2 + 3, y + TILE/2 + bob - 14);
+    ctx.lineTo(x + TILE/2 + 6, y + TILE/2 + bob - 18);
+    ctx.lineTo(x + TILE/2 + 8, y + TILE/2 + bob - 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Sprite name initials
+  ctx.font = 'bold 7px JetBrains Mono';
+  ctx.fillStyle = '#1a1530';
+  ctx.textAlign = 'center';
+  const initials = e.name.split(' ').map(w => w[0]).join('').slice(0,2);
+  ctx.fillText(initials, x + TILE/2, y + TILE - 14);
+
+  // HP bar
+  const bw = TILE - 14;
+  ctx.fillStyle = 'rgba(26,21,48,0.3)';
+  ctx.fillRect(x + 7, y + TILE - 9, bw, 4);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(x + 7, y + TILE - 9, Math.max(0, (e.currentHP / e.hp) * bw), 4);
+  ctx.strokeStyle = '#1a1530';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 7, y + TILE - 9, bw, 4);
+}
+
+function drawMap() {
+  const t = state.t;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const maxZone = getMaxUnlockedZone();
+
+  // Background tiles with subtle 3D depth
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const z = getZone(c);
+      const seed = getTileBg(z, c, r);
+      const isAlt = (c + r) % 2 === 0;
+      ctx.fillStyle = isAlt ? ZONES[z].bg1 : ZONES[z].bg2;
+      ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+
+      // grid
+      ctx.strokeStyle = ZONES[z].grid;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(c * TILE, r * TILE, TILE, TILE);
+
+      // small decoration sprinkles
+      if (seed === 1) {
+        ctx.fillStyle = ZONES[z].grid;
+        ctx.beginPath();
+        ctx.arc(c * TILE + TILE * 0.2 + Math.sin(t*0.001 + c)*1, r * TILE + TILE * 0.7, 2, 0, Math.PI*2);
+        ctx.fill();
+      } else if (seed === 3) {
+        ctx.fillStyle = ZONES[z].label + '33';
+        ctx.fillRect(c * TILE + TILE * 0.7, r * TILE + TILE * 0.3, 4, 4);
+      } else if (seed === 5) {
+        ctx.strokeStyle = ZONES[z].grid;
+        ctx.beginPath();
+        ctx.moveTo(c * TILE + 8, r * TILE + 8);
+        ctx.lineTo(c * TILE + 14, r * TILE + 14);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Zone boundary lines (animated dash)
+  ctx.strokeStyle = 'rgba(26,21,48,0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.lineDashOffset = -t * 0.02;
+  [4, 8, 12, 16].forEach(c => {
+    ctx.beginPath();
+    ctx.moveTo(c * TILE, 0); ctx.lineTo(c * TILE, ROWS * TILE);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Zone labels with banner
+  ctx.font = 'bold 11px Bungee, sans-serif';
+  ctx.textAlign = 'center';
+  const labels = ['MOLE MTN', 'REAGENT RUINS', 'YIELD PEAK', 'SOLUTION STN', 'REACTION RIDGE'];
+  [0,1,2,3,4].forEach(z => {
+    const cx = (z * 4 + 2) * TILE;
+    // banner
+    ctx.fillStyle = ZONES[z].label;
+    ctx.fillRect(cx - 56, 4, 112, 16);
+    ctx.strokeStyle = '#1a1530';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - 56, 4, 112, 16);
+    ctx.fillStyle = 'white';
+    ctx.fillText(labels[z], cx, 16);
+  });
+  ctx.textAlign = 'left';
+
+  // Locked overlay
+  for (let z = maxZone + 1; z <= 4; z++) {
+    const sx = z * 4 * TILE, w = 4 * TILE, cx2 = sx + w / 2;
+    ctx.fillStyle = 'rgba(26,21,48,0.65)';
+    ctx.fillRect(sx, 24, w, ROWS * TILE - 24);
+    // diagonal stripes
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(sx, 24, w, ROWS * TILE - 24);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(251,191,36,0.15)';
+    ctx.lineWidth = 8;
+    for (let i = -ROWS*TILE; i < w + ROWS*TILE; i += 24) {
+      ctx.beginPath();
+      ctx.moveTo(sx + i, 24);
+      ctx.lineTo(sx + i + ROWS*TILE, ROWS*TILE);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // padlock
+    ctx.font = '36px serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText('🔒', cx2, ROWS * TILE / 2 + 4);
+    ctx.font = 'bold 11px Bungee, sans-serif';
+    ctx.fillStyle = '#fef9f3';
+    ctx.fillText('LOCKED', cx2, ROWS * TILE / 2 + 30);
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText('Clear Zone ' + z + ' first', cx2, ROWS * TILE / 2 + 46);
+    ctx.textAlign = 'left';
+  }
+
+  // Boss Door — appears when all 15 minions cleared OR devUnlock
+  const allCleared = state.enemies.length && state.enemies.every(e => !e.alive);
+  if (allCleared || state.devUnlock) {
+    const dx = 19 * TILE, dy = 4 * TILE; // col 19, row 4
+    const pulse = 1 + Math.sin(t * 0.005) * 0.08;
+    // glow
+    const dgrad = ctx.createRadialGradient(dx + TILE/2, dy + TILE/2, 0, dx + TILE/2, dy + TILE/2, 50 * pulse);
+    dgrad.addColorStop(0, 'rgba(168,85,247,0.55)');
+    dgrad.addColorStop(1, 'rgba(168,85,247,0)');
+    ctx.fillStyle = dgrad;
+    ctx.fillRect(dx - 30, dy - 30, TILE + 60, TILE + 60);
+    // door frame
+    ctx.fillStyle = '#1a0708';
+    ctx.fillRect(dx + 6, dy + 4, TILE - 12, TILE - 6);
+    // door
+    ctx.fillStyle = '#3a1a20';
+    ctx.fillRect(dx + 9, dy + 7, TILE - 18, TILE - 12);
+    // planks
+    ctx.strokeStyle = '#1a0708';
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(dx + 9 + i * (TILE - 18) / 3, dy + 7);
+      ctx.lineTo(dx + 9 + i * (TILE - 18) / 3, dy + TILE - 5);
+      ctx.stroke();
+    }
+    // gold knocker / skull
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(dx + TILE/2, dy + TILE/2 + 2, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1a0708';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // arch top
+    ctx.fillStyle = '#1a0708';
+    ctx.beginPath();
+    ctx.moveTo(dx + 6, dy + 8);
+    ctx.quadraticCurveTo(dx + TILE/2, dy - 4, dx + TILE - 6, dy + 8);
+    ctx.lineTo(dx + TILE - 6, dy + 4);
+    ctx.lineTo(dx + 6, dy + 4);
+    ctx.closePath();
+    ctx.fill();
+    // banner above
+    ctx.fillStyle = '#a855f7';
+    ctx.fillRect(dx - 4, dy - 14, TILE + 8, 12);
+    ctx.strokeStyle = '#1a0708';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(dx - 4, dy - 14, TILE + 8, 12);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 9px Bungee, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BOSS', dx + TILE/2, dy - 5);
+    ctx.textAlign = 'left';
+  }
+
+  // Enemies
+  state.enemies.forEach(e => {
+    if (!e.alive) return;
+    if (e.zone > maxZone) return;
+    renderEnemyOnCanvas(e, t);
+  });
+
+  // Player (interpolated)
+  const px = state.rx * TILE;
+  const py = state.ry * TILE;
+  const bobP = Math.sin(t * 0.005) * 1.5;
+
+  // shadow
+  ctx.fillStyle = 'rgba(26,21,48,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(px + TILE/2, py + TILE - 5, 14, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // glow
+  const glowR = 20 + Math.sin(t * 0.004) * 3;
+  const grad = ctx.createRadialGradient(px + TILE/2, py + TILE/2 + bobP, 0, px + TILE/2, py + TILE/2 + bobP, glowR);
+  grad.addColorStop(0, 'rgba(59,130,246,0.4)');
+  grad.addColorStop(1, 'rgba(59,130,246,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(px - 10, py - 10, TILE + 20, TILE + 20);
+
+  // body
+  ctx.fillStyle = '#3b82f6';
+  ctx.strokeStyle = '#1a1530';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(px + TILE/2, py + TILE/2 + bobP + 2, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // cape (simple triangle)
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.moveTo(px + TILE/2 - 11 * state.facing, py + TILE/2 + bobP);
+  ctx.lineTo(px + TILE/2 - 18 * state.facing, py + TILE/2 + bobP + 8 + Math.sin(t * 0.006) * 2);
+  ctx.lineTo(px + TILE/2 - 11 * state.facing, py + TILE/2 + bobP + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // head
+  ctx.fillStyle = '#fde68a';
+  ctx.beginPath();
+  ctx.arc(px + TILE/2, py + TILE/2 + bobP - 5, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // eyes
+  ctx.fillStyle = '#1a1530';
+  ctx.beginPath();
+  ctx.arc(px + TILE/2 - 2 + state.facing * 1, py + TILE/2 + bobP - 6, 1.2, 0, Math.PI * 2);
+  ctx.arc(px + TILE/2 + 3 + state.facing * 1, py + TILE/2 + bobP - 6, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // M emblem
+  ctx.font = 'bold 10px Bungee';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'center';
+  ctx.fillText('M', px + TILE/2, py + TILE/2 + bobP + 6);
+  ctx.textAlign = 'left';
+}
+
+function tick(time) {
+  state.t = time;
+  // smooth interp for player
+  const lerp = 0.25;
+  state.rx += (state.px - state.rx) * lerp;
+  state.ry += (state.py - state.ry) * lerp;
+  drawMap();
+  requestAnimationFrame(tick);
+}
+
+function updateHUD() {
+  document.getElementById('hud-hp').textContent = state.playerHP;
+  document.getElementById('hud-zone').textContent = ZONES[getZone(state.px)].name;
+  document.getElementById('hud-kills').textContent = state.kills;
+  const pct = (state.playerHP / state.playerMaxHP) * 100;
+  document.getElementById('hud-hp-fill').style.width = pct + '%';
+  updateZoneBadges();
+}
+
+// ============================================================
+//  MOVEMENT
+// ============================================================
+function move(dx, dy) {
+  if (state.inBattle) return;
+  const nx = state.px + dx, ny = state.py + dy;
+  if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+  if (dx !== 0) state.facing = dx > 0 ? 1 : -1;
+  const tz = getZone(nx), max = getMaxUnlockedZone();
+  if (tz > max && !state.devUnlock) {
+    showToast('🔒 Zone ' + (tz + 1) + ' is locked! Clear Zone ' + tz + ' first.');
+    return;
+  }
+  state.px = nx; state.py = ny;
+  updateHUD();
+  setTimeout(checkEncounter, 180); // wait for visual to catch up
+}
+
+function checkEncounter() {
+  // Boss door at (19, 4)
+  const allCleared = state.enemies.length && state.enemies.every(e => !e.alive);
+  if (state.px === 19 && state.py === 4 && (allCleared || state.devUnlock)) {
+    enterBossRoom();
+    return;
+  }
+  const e = state.enemies.find(e => e.alive && e.ex === state.px && e.ey === state.py);
+  if (e) startBattle(e);
+}
+
+// ============================================================
+//  BATTLE
+// ============================================================
+function applyNoUnit(noUnit) {
+  const ui = document.getElementById('unit-input');
+  const lu = document.getElementById('label-unit');
+  ui.style.display = noUnit ? 'none' : '';
+  lu.style.display = noUnit ? 'none' : '';
+  if (!noUnit) { ui.value = ''; ui.disabled = false; }
+}
+
+function startBattle(enemy) {
+  state.inBattle = true;
+  state.currentEnemy = enemy;
+  state.combo = 0;
+  document.getElementById('combo-badge').style.display = 'none';
+  document.getElementById('map-screen').style.display = 'none';
+  const bs = document.getElementById('battle-screen');
+  bs.style.display = 'flex';
+  bs.classList.remove('screen-enter');
+  void bs.offsetWidth;
+  bs.classList.add('screen-enter');
+
+  document.getElementById('enemy-name').textContent = enemy.name;
+  document.getElementById('enemy-sprite').innerHTML = SPRITES[enemy.sprite] || '';
+  document.getElementById('player-sprite').innerHTML = SPRITES.HERO;
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('battle-log').textContent = enemy.boss
+    ? '👑 MR. STEWART awaits. Solve the final challenge!'
+    : enemy.name + ' blocks your path!';
+
+  updateBattleHP();
+  loadProblem(enemy.zone);
+}
+
+function updateBattleHP() {
+  const e = state.currentEnemy;
+  const pp = Math.max(0, (state.playerHP / state.playerMaxHP) * 100);
+  const ep = Math.max(0, (e.currentHP / e.hp) * 100);
+  const pBar = document.getElementById('player-hp-bar');
+  const eBar = document.getElementById('enemy-hp-bar');
+  pBar.style.width = pp + '%';
+  eBar.style.width = ep + '%';
+  pBar.classList.toggle('low', pp < 30);
+  eBar.classList.toggle('low', ep < 30);
+  document.getElementById('player-hp-text').textContent = state.playerHP + ' / ' + state.playerMaxHP;
+  document.getElementById('enemy-hp-text').textContent = Math.max(0, e.currentHP) + ' / ' + e.hp;
+}
+
+function loadProblem(zone) {
+  const builders = PROBLEM_BUILDERS[zone] || PROBLEM_BUILDERS[0];
+  state.currentProblem = pick(builders)();
+  state.answering = true;
+  document.getElementById('problem-zone').textContent = 'ZONE ' + (zone + 1) + ' · ' + ZONES[zone].name.toUpperCase();
+  document.getElementById('problem-zone').style.background = ZONES[zone].accent;
+  document.getElementById('problem-zone').style.color = 'white';
+  document.getElementById('problem-text').textContent = state.currentProblem.q;
+  const ai = document.getElementById('answer-input');
+  ai.value = '';
+  ai.disabled = false;
+  ai.inputMode = state.currentProblem.answerType === 'mc' ? 'text' : 'decimal';
+  ai.placeholder = state.currentProblem.answerType === 'mc' ? 'A, B, C, or D' : 'e.g. 2.50';
+  applyNoUnit(!!state.currentProblem.noUnit);
+  setTimeout(() => ai.focus(), 50);
+}
+
+function animateSprite(id, animClass) {
+  const el = document.getElementById(id);
+  el.classList.remove('hit', 'attack', 'defeated');
+  void el.offsetWidth;
+  el.classList.add(animClass);
+}
+
+function submitAnswer() {
+  if (!state.answering) return;
+  const numRaw = document.getElementById('answer-input').value;
+  const expectedType = state.currentProblem.answerType || 'numeric';
+  const noUnit = expectedType === 'mc' || !!state.currentProblem.noUnit;
+  const unitRaw = document.getElementById('unit-input').value.trim();
+  let numOk = false;
+  let correct = null;
+
+  if (expectedType === 'mc') {
+    const letter = numRaw.trim().toUpperCase();
+    if (!/^[ABCD]$/.test(letter)) {
+      document.getElementById('battle-log').textContent = 'Enter A, B, C, or D!';
+      return;
+    }
+    numOk = letter === state.currentProblem.answer;
+  } else {
+    const input = parseFloat(numRaw);
+    if (isNaN(input)) {
+      document.getElementById('battle-log').textContent = 'Enter a number!';
+      return;
+    }
+    correct = decodeA(state.currentProblem._a);
+    const tol = numericTol(state.currentProblem, correct);
+    numOk = Math.abs(input - correct) <= tol;
+  }
+  if (!noUnit && !unitRaw) { document.getElementById('battle-log').textContent = "Don't forget the unit!"; return; }
+
+  const unitOk = noUnit || unitMatches(unitRaw, state.currentProblem.unit);
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  state.answering = false;
+  document.getElementById('answer-input').disabled = true;
+  if (!noUnit) document.getElementById('unit-input').disabled = true;
+
+  if (numOk && unitOk) {
+    // CORRECT
+    state.combo++;
+    const bonus = state.combo >= 3 ? 4 : (state.combo === 2 ? 2 : 0);
+    const dmg = 8 + bonus;
+    state.currentEnemy.currentHP -= dmg;
+
+    fb.className = 'feedback correct';
+    fb.textContent = '✓ Correct! ' + state.currentProblem.hint + '. You dealt ' + dmg + ' damage!' + (bonus ? ' (+' + bonus + ' combo bonus!)' : '');
+    document.getElementById('battle-log').textContent = '⚔ You strike ' + state.currentEnemy.name + ' for ' + dmg + ' damage!';
+
+    // animations
+    animateSprite('player-sprite', 'attack');
+    setTimeout(() => animateSprite('enemy-sprite', 'hit'), 200);
+    flashScreen();
+    shake(document.getElementById('enemy-card'), false);
+
+    const enemyCard = document.getElementById('enemy-card');
+    const r = enemyCard.getBoundingClientRect();
+    spawnParticles(r.left + r.width / 2, r.top + r.height / 2.5, {
+      count: 25,
+      colors: ['#fbbf24', '#fde68a', '#22c55e', '#fef3c7'],
+    });
+    spawnDamageNumber(enemyCard, dmg, 'enemy');
+
+    // combo badge
+    if (state.combo >= 2) {
+      const badge = document.getElementById('combo-badge');
+      badge.textContent = '×' + state.combo + ' COMBO!';
+      badge.style.display = 'block';
+      badge.style.animation = 'none';
+      void badge.offsetWidth;
+      badge.style.animation = 'comboPop 0.4s cubic-bezier(.34,1.56,.64,1)';
+    }
+
+    updateBattleHP();
+    if (state.currentEnemy.currentHP <= 0) {
+      animateSprite('enemy-sprite', 'defeated');
+      setTimeout(endBattle, 1200);
+      return;
+    }
+  } else {
+    // WRONG
+    state.combo = 0;
+    document.getElementById('combo-badge').style.display = 'none';
+    state.playerHP = Math.max(0, state.playerHP - state.currentEnemy.damage);
+
+    fb.className = 'feedback wrong';
+    const answerText = describeExpectedAnswer(state.currentProblem);
+    if (numOk && !unitOk) {
+      fb.textContent = '✗ Number correct, wrong unit! Expected: ' + state.currentProblem.unit + '. You took ' + state.currentEnemy.damage + ' damage.';
+    } else {
+      fb.textContent = '✗ Wrong. Answer: ' + answerText + '. Hint: ' + state.currentProblem.hint + '. (−' + state.currentEnemy.damage + ' HP)';
+    }
+    document.getElementById('battle-log').textContent = '💥 ' + state.currentEnemy.name + ' counterattacks!';
+
+    animateSprite('enemy-sprite', 'attack');
+    setTimeout(() => animateSprite('player-sprite', 'hit'), 200);
+    shake(document.getElementById('player-card'), true);
+    shake(document.getElementById('game'), false);
+
+    const playerCard = document.getElementById('player-card');
+    const r = playerCard.getBoundingClientRect();
+    spawnParticles(r.left + r.width / 2, r.top + r.height / 2.5, {
+      count: 18,
+      colors: ['#ef4444', '#dc2626', '#f87171'],
+    });
+    spawnDamageNumber(playerCard, state.currentEnemy.damage, 'player');
+
+    updateBattleHP();
+    if (state.playerHP <= 0) { setTimeout(gameOver, 1600); return; }
+  }
+  setTimeout(() => {
+    loadProblem(state.currentEnemy.zone);
+    fb.style.display = 'none';
+  }, 2400);
+}
+
+function endBattle() {
+  const wasBoss = state.currentEnemy.boss;
+  state.currentEnemy.alive = false;
+  if (!wasBoss) state.kills++;
+  state.inBattle = false;
+
+  // Big victory burst
+  const enemyCard = document.getElementById('enemy-card');
+  const r = enemyCard.getBoundingClientRect();
+  spawnParticles(r.left + r.width / 2, r.top + r.height / 2, {
+    count: 40,
+    colors: ['#fbbf24', '#fde68a', '#22c55e', '#fef3c7', '#a855f7'],
+  });
+
+  setTimeout(() => {
+    if (wasBoss) {
+      // Boss defeated → straight to victory screen, skip map
+      state.bossDefeated = true;
+      document.getElementById('battle-screen').style.display = 'none';
+      setTimeout(showWin, 200);
+      return;
+    }
+    const wasZoneCleared = state.enemies.filter(e => e.zone === state.currentEnemy.zone).every(e => !e.alive);
+
+    document.getElementById('battle-screen').style.display = 'none';
+    const ms = document.getElementById('map-screen');
+    ms.style.display = 'flex';
+    ms.classList.remove('screen-enter');
+    void ms.offsetWidth;
+    ms.classList.add('screen-enter');
+
+    updateHUD();
+
+    if (wasZoneCleared) {
+      const nextZ = state.currentEnemy.zone + 2;
+      if (nextZ <= 5) {
+        showToast('🎉 Zone ' + (state.currentEnemy.zone + 1) + ' cleared! Zone ' + nextZ + ' unlocked!');
+      } else {
+        showToast('🎉 All zones cleared! The BOSS DOOR has appeared in REACTION RIDGE!');
+      }
+    } else {
+      showToast('+1 defeated! ' + state.kills + '/15');
+    }
+  }, 400);
+}
+
+function fleeBattle() {
+  state.playerHP = Math.max(1, state.playerHP - 3);
+  state.combo = 0;
+  state.inBattle = false;
+  state.px = Math.max(0, state.px - 1);
+  document.getElementById('battle-screen').style.display = 'none';
+  const ms = document.getElementById('map-screen');
+  ms.style.display = 'flex';
+  ms.classList.remove('screen-enter');
+  void ms.offsetWidth;
+  ms.classList.add('screen-enter');
+  updateHUD();
+  showToast('🏃 You fled! −3 HP');
+}
+
+function gameOver() {
+  document.getElementById('battle-screen').style.display = 'none';
+  const ws = document.getElementById('win-screen');
+  ws.style.display = 'flex';
+  ws.classList.add('screen-enter');
+  ws.innerHTML = `
+    <div class="trophy" style="filter:drop-shadow(0 8px 16px rgba(239,68,68,0.5));">💀</div>
+    <div class="win-title" style="color:#ef4444">DEFEATED</div>
+    <div class="win-sub">Your Mole Hero has fallen. Review your chemistry and try again — you'll get them next time!</div>
+    <button class="big-btn" onclick="location.reload()">▶ TRY AGAIN</button>
+  `;
+}
+
+function spawnConfetti() {
+  const ws = document.getElementById('win-screen');
+  const colors = ['#fbbf24', '#22c55e', '#3b82f6', '#a855f7', '#ef4444', '#f97316'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = (Math.random() * 4) + 's';
+    c.style.animationDuration = (3 + Math.random() * 2) + 's';
+    ws.appendChild(c);
+  }
+}
+
+// ============================================================
+//  BOSS ROOM
+// ============================================================
+function enterBossRoom() {
+  state.inBossRoom = true;
+  state.bossRoomEntered = true;
+  document.getElementById('map-screen').style.display = 'none';
+  const brs = document.getElementById('boss-room-screen');
+  brs.style.display = 'flex';
+  brs.classList.remove('screen-enter');
+  void brs.offsetWidth;
+  brs.classList.add('screen-enter');
+
+  // Inject sprites
+  document.getElementById('br-boss-sprite').innerHTML = SPRITES.MR_STEWART;
+  document.getElementById('br-player-stage').innerHTML = SPRITES.HERO;
+
+  // HUD
+  const hp = state.playerHP, mx = state.playerMaxHP;
+  document.getElementById('br-hud-hp').textContent = hp;
+  document.getElementById('br-hud-hp-fill').style.width = (hp / mx * 100) + '%';
+
+  showToast('👑 You stand before MR. STEWART!');
+}
+
+function leaveBossRoom() {
+  state.inBossRoom = false;
+  document.getElementById('boss-room-screen').style.display = 'none';
+  // Step player back one tile so they can re-enter
+  state.px = 18;
+  state.rx = 18;
+  const ms = document.getElementById('map-screen');
+  ms.style.display = 'flex';
+  ms.classList.remove('screen-enter');
+  void ms.offsetWidth;
+  ms.classList.add('screen-enter');
+  updateHUD();
+}
+
+function startBossBattle() {
+  // Build a live boss enemy and use the regular battle flow
+  const bossEnemy = {
+    ...BOSS,
+    ex: 19, ey: 4,
+    id: 999,
+    alive: true,
+    currentHP: BOSS.hp,
+  };
+  document.getElementById('boss-room-screen').style.display = 'none';
+  startBattle(bossEnemy);
+}
+
+// ============================================================
+//  DEV UNLOCK
+// ============================================================
+function openDevModal() {
+  const bg = document.getElementById('dev-modal-bg');
+  bg.classList.add('show');
+  const inp = document.getElementById('dev-code-input');
+  inp.value = '';
+  document.getElementById('dev-msg').textContent = '';
+  document.getElementById('dev-msg').className = 'dev-msg';
+  setTimeout(() => inp.focus(), 100);
+}
+function closeDevModal() {
+  document.getElementById('dev-modal-bg').classList.remove('show');
+}
+function submitDevCode() {
+  const code = document.getElementById('dev-code-input').value.trim();
+  const msg = document.getElementById('dev-msg');
+  if (code === '4115') {
+    state.devUnlock = true;
+    msg.textContent = '✓ ACCESS GRANTED';
+    msg.className = 'dev-msg ok';
+    document.getElementById('dev-fab').classList.add('unlocked');
+    // banner
+    let banner = document.getElementById('dev-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'dev-banner';
+      banner.className = 'dev-banner';
+      banner.textContent = '🔓 DEV MODE — ALL ZONES UNLOCKED';
+      document.body.appendChild(banner);
+    }
+    updateHUD();
+    setTimeout(closeDevModal, 700);
+  } else {
+    msg.textContent = '✗ INVALID CODE';
+    msg.className = 'dev-msg bad';
+    const inp = document.getElementById('dev-code-input');
+    inp.value = '';
+    inp.style.animation = 'none';
+    void inp.offsetWidth;
+    inp.style.animation = 'shake 0.3s';
+  }
+}
+// keyboard for dev modal
+document.addEventListener('keydown', (e) => {
+  const bg = document.getElementById('dev-modal-bg');
+  if (bg && bg.classList.contains('show')) {
+    if (e.key === 'Enter') { e.preventDefault(); submitDevCode(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeDevModal(); }
+  }
+});
+
+function showWin() {
+  document.getElementById('map-screen').style.display = 'none';
+  document.getElementById('boss-room-screen').style.display = 'none';
+  const ws = document.getElementById('win-screen');
+  ws.style.display = 'flex';
+  ws.classList.add('screen-enter');
+  spawnConfetti();
+}
+
+function startGame() {
+  document.getElementById('title-screen').style.display = 'none';
+  const ms = document.getElementById('map-screen');
+  ms.style.display = 'flex';
+  ms.classList.add('screen-enter');
+  initEnemies();
+  state.rx = state.px;
+  state.ry = state.py;
+  updateHUD();
+}
+
+document.addEventListener('keydown', e => {
+  if (state.inBattle) {
+    if (e.key === 'Enter') submitAnswer();
+    return;
+  }
+  if (document.getElementById('title-screen').style.display !== 'none') {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(); }
+    return;
+  }
+  const mv = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0], w:[0,-1], s:[0,1], a:[-1,0], d:[1,0], W:[0,-1], S:[0,1], A:[-1,0], D:[1,0] };
+  const m = mv[e.key];
+  if (m) { e.preventDefault(); move(m[0], m[1]); }
+});
+
+// kick off render loop
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
