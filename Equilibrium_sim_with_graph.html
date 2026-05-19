@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Equilibrium Lab: Stress & Graphing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f4f8; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .lab-bench { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd; }
+        .config-row { grid-column: span 2; display: flex; gap: 20px; background: #eee; padding: 12px; border-radius: 6px; border: 1px solid #ccc; align-items: center; }
+        
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        
+        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; grid-column: span 2; }
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .shake-btn { background: #8e44ad; color: white; }
+        .batch-btn { background: #34495e; color: white; }
+        .stress-btn { background: #e67e22; color: white; }
+        .csv-btn { background: #27ae60; color: white; }
+        .reset-btn { background: #e74c3c; color: white; }
+        button:hover { opacity: 0.8; }
+
+        #graphContainer { margin-top: 20px; height: 350px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: white; display: none; }
+        .table-wrapper { max-height: 250px; overflow-y: auto; border: 1px solid #ddd; margin-top: 20px; border-radius: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #dfe6e9; padding: 8px; text-align: center; font-size: 13px; }
+        th { background-color: #8e44ad; color: white; position: sticky; top: 0; }
+        .a-col { color: #c0392b; font-weight: bold; }
+        .b-col { color: #2980b9; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Lab Simulation: Dynamic Equilibrium with Graphs</h2>
+    
+    <div class="lab-bench">
+        <div class="config-row">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="smoothingToggle" style="width:18px; height:18px;">
+                <label for="smoothingToggle" style="margin:0;">Data Smoothing (Use k values)</label>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="graphToggle" onchange="toggleGraph()" style="width:18px; height:18px;">
+                <label for="graphToggle" style="margin:0;">Show Real-Time Graph</label>
+            </div>
+        </div>
+
+        <div>
+            <label>Initial [A]₀:</label>
+            <input type="number" id="totalDice" value="200">
+        </div>
+        <div>
+            <label>System Constant (K):</label>
+            <p style="font-size: 0.8em; color: #666; margin: 0;">Adjust rates to shift equilibrium.</p>
+        </div>
+
+        <div>
+            <label>Forward Rate (A &rarr; B):</label>
+            <select id="forwardRate">
+                <option value="0.5">50% Probability</option>
+                <option value="0.166">16.6% Probability</option>
+            </select>
+        </div>
+        <div>
+            <label>Reverse Rate (B &rarr; A):</label>
+            <select id="reverseRate">
+                <option value="0.5">50% Probability</option>
+                <option value="0.166">16.6% Probability</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="shake-btn" onclick="runStep()">Shake Dice</button>
+            <button class="batch-btn" onclick="runBatch(10)">Run 10 Steps</button>
+            <button class="stress-btn" onclick="addStress()">Stress: +100 [A]</button>
+            <button class="csv-btn" onclick="downloadCSV()">Export Data</button>
+            <button class="reset-btn" onclick="resetSim()">Reset Lab</button>
+        </div>
+    </div>
+
+    <div id="graphContainer">
+        <canvas id="equilibriumChart"></canvas>
+    </div>
+
+    <div class="table-wrapper" id="scrollContainer">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Tank [A]</th>
+                    <th>Tank [B]</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let t = 0, currentA = 0, currentB = 0, stressEvents = [], chart;
+
+    // Chart Initialization
+    const ctx = document.getElementById('equilibriumChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: '[A]', borderColor: '#c0392b', data: [], fill: false, tension: 0.1 },
+                { label: '[B]', borderColor: '#2980b9', data: [], fill: false, tension: 0.1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { type: 'linear', title: { display: true, text: 'Steps' } }, y: { min: 0 } }
+        },
+        plugins: [{
+            id: 'stressLines',
+            afterDraw: (chart) => {
+                const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+                stressEvents.forEach(time => {
+                    const xPos = x.getPixelForValue(time);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom);
+                    ctx.lineWidth = 2; ctx.strokeStyle = '#e67e22'; ctx.stroke();
+                    ctx.fillStyle = '#e67e22'; ctx.fillText("STRESS", xPos + 5, top + 15);
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+
+    function toggleGraph() {
+        const show = document.getElementById('graphToggle').checked;
+        document.getElementById('graphContainer').style.display = show ? 'block' : 'none';
+        if(show) chart.update();
+    }
+
+    function initValues() {
+        currentA = parseInt(document.getElementById('totalDice').value);
+        currentB = 0;
+        updateUI(0, currentA, 0, "Start");
+    }
+
+    function addStress() {
+        if (t === 0 && chart.data.datasets[0].data.length === 0) initValues();
+        currentA += 100;
+        stressEvents.push(t);
+        updateUI(t, currentA, currentB, "STRESS: Added 100 to [A]");
+    }
+
+    function runBatch(steps) { for (let i = 0; i < steps; i++) runStep(); }
+
+    function runStep() {
+        if (t === 0 && chart.data.datasets[0].data.length === 0) initValues();
+        
+        const kf = parseFloat(document.getElementById('forwardRate').value);
+        const kr = parseFloat(document.getElementById('reverseRate').value);
+        const smoothed = document.getElementById('smoothingToggle').checked;
+        
+        let aToB = 0, bToA = 0;
+        if (smoothed) {
+            aToB = Math.round(currentA * kf);
+            bToA = Math.round(currentB * kr);
+        } else {
+            for (let i = 0; i < currentA; i++) if (Math.random() < kf) aToB++;
+            for (let i = 0; i < currentB; i++) if (Math.random() < kr) bToA++;
+        }
+
+        t++;
+        currentA = currentA - aToB + bToA;
+        currentB = currentB + aToB - bToA;
+        updateUI(t, currentA, currentB, "");
+    }
+
+    function updateUI(time, a, b, note) {
+        chart.data.datasets[0].data.push({x: time, y: a});
+        chart.data.datasets[1].data.push({x: time, y: b});
+        chart.update('none');
+
+        const tbody = document.getElementById('tableBody');
+        tbody.insertAdjacentHTML('beforeend', `<tr><td>${time}</td><td class="a-col">${a}</td><td class="b-col">${b}</td><td>${note}</td></tr>`);
+        document.getElementById('scrollContainer').scrollTop = document.getElementById('scrollContainer').scrollHeight;
+    }
+
+    function resetSim() {
+        t = 0; stressEvents = [];
+        document.getElementById('tableBody').innerHTML = "";
+        chart.data.datasets.forEach(d => d.data = []);
+        chart.update();
+    }
+
+    function downloadCSV() {
+        let csv = "Step,A,B,Note\n";
+        document.querySelectorAll("#tableBody tr").forEach(row => {
+            csv += Array.from(row.querySelectorAll("td")).map(col => col.innerText).join(",") + "\n";
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'equilibrium_data.csv';
+        a.click();
+    }
+</script>
+</body>
+</html>
