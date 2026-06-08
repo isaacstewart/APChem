@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chemical Kinetics Simulator [A] -> [B]</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        
+        /* Fixed Checkbox Styling */
+        .toggle-section { grid-column: span 2; display: flex; align-items: center; background: #dfe6e9; padding: 10px; border-radius: 6px; gap: 10px; }
+        .toggle-section input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; margin: 0; }
+        .toggle-section label { margin: 0; cursor: pointer; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; grid-column: span 2; flex-wrap: wrap; }
+        button { flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .run-btn { background: #3498db; color: white; }
+        .batch-btn { background: #9b59b6; color: white; }
+        .csv-btn { background: #27ae60; color: white; }
+        .reset-btn { background: #e74c3c; color: white; }
+        
+        #graphContainer { margin-top: 20px; height: 400px; display: none; border: 1px solid #ddd; padding: 10px; border-radius: 8px; }
+        .table-wrapper { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; margin-top: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #2c3e50; color: white; position: sticky; top: 0; }
+        .product-col { color: #27ae60; font-weight: bold; }
+        .reactant-col { color: #c0392b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Chemical Kinetics Simulator: [A] &rarr; [B]</h2>
+    
+    <div class="controls">
+        <div>
+            <label>Initial [A]<sub>0</sub>:</label>
+            <input type="number" id="moleculeCount" value="500">
+        </div>
+        <div>
+            <label>Reaction Order:</label>
+            <select id="reactionOrder">
+                <option value="0">Zero-Order</option>
+                <option value="1">1st Order</option>
+                <option value="2">2nd Order</option>
+            </select>
+        </div>
+        <div>
+            <label>Probability (k):</label>
+            <select id="rollTarget">
+                <option value="1/2">50% (1/2)</option>
+                <option value="1/3">33% (1/3)</option>
+                <option value="2/3">66% (2/3)</option>
+            </select>
+        </div>
+
+        <div class="toggle-section">
+            <input type="checkbox" id="graphToggle" onchange="toggleGraph()">
+            <label for="graphToggle">Show Real-Time Graph</label>
+        </div>
+
+        <div class="btn-group">
+            <button class="run-btn" onclick="runStep()">Run 1 Step</button>
+            <button class="batch-btn" onclick="runBatch(10)">Run 10 Steps</button>
+            <button class="csv-btn" onclick="downloadCSV()">Download CSV</button>
+            <button class="reset-btn" onclick="resetSim()">Reset Lab</button>
+        </div>
+    </div>
+
+    <div id="graphContainer">
+        <canvas id="kineticsChart"></canvas>
+    </div>
+
+    <div class="table-wrapper" id="scrollContainer">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Time (t)</th>
+                    <th>Reactant [A]</th>
+                    <th>Product [B]</th>
+                    <th>&Delta;[B]</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let t = 0;
+    let currentA = 0;
+    let initialA = 0;
+    let chart;
+
+    // Initialize Chart
+    const ctx = document.getElementById('kineticsChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: '[A] Reactant', borderColor: '#c0392b', data: [], fill: false, tension: 0.1 },
+                { label: '[B] Product', borderColor: '#27ae60', data: [], fill: false, tension: 0.1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { 
+                x: { type: 'linear', title: { display: true, text: 'Time (t)' } }, 
+                y: { title: { display: true, text: 'Amount' }, min: 0 } 
+            }
+        }
+    });
+
+    function toggleGraph() {
+        const container = document.getElementById('graphContainer');
+        container.style.display = document.getElementById('graphToggle').checked ? 'block' : 'none';
+        chart.update();
+    }
+
+    function checkSuccess(ratio) {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        if (ratio === "1/2") return roll <= 3; 
+        if (ratio === "1/3") return roll <= 2; 
+        if (ratio === "2/3") return roll <= 4; 
+        return false;
+    }
+
+    function runBatch(steps) {
+        for (let i = 0; i < steps; i++) {
+            if (currentA <= 0 && t > 0) break;
+            runStep();
+        }
+    }
+
+    function runStep() {
+        if (t === 0 && document.getElementById('tableBody').innerHTML === "") {
+            initialA = parseInt(document.getElementById('moleculeCount').value);
+            currentA = initialA;
+            addTableRow(0, currentA, 0, 0);
+            updateChart(0, currentA, 0);
+        }
+        
+        if (currentA <= 0) return;
+
+        const ratio = document.getElementById('rollTarget').value;
+        const order = document.getElementById('reactionOrder').value;
+        let reactedThisTurn = 0;
+
+        if (order === "0") {
+            let probValue = (ratio === "1/2" ? 0.5 : ratio === "1/3" ? 0.33 : 0.66);
+            let fixedRate = Math.round(initialA * (probValue / 10)); 
+            reactedThisTurn = Math.min(currentA, Math.max(1, fixedRate));
+        } else if (order === "1") {
+            for (let i = 0; i < currentA; i++) if (checkSuccess(ratio)) reactedThisTurn++;
+        } else {
+            let pairs = Math.floor(currentA / 2);
+            for (let i = 0; i < pairs; i++) {
+                if (checkSuccess(ratio) && checkSuccess(ratio)) reactedThisTurn += 2;
+            }
+        }
+
+        t++;
+        currentA -= reactedThisTurn;
+        if (currentA < 0) currentA = 0;
+        let currentB = initialA - currentA;
+
+        addTableRow(t, currentA, currentB, reactedThisTurn);
+        updateChart(t, currentA, currentB);
+        
+        const container = document.getElementById('scrollContainer');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function updateChart(time, a, b) {
+        chart.data.datasets[0].data.push({x: time, y: a});
+        chart.data.datasets[1].data.push({x: time, y: b});
+        chart.update('none'); 
+    }
+
+    function addTableRow(time, a, b, deltaB) {
+        const tbody = document.getElementById('tableBody');
+        tbody.insertAdjacentHTML('beforeend', `<tr><td>${time}</td><td class="reactant-col">${a}</td><td class="product-col">${b}</td><td>${deltaB}</td></tr>`);
+    }
+
+    function resetSim() {
+        t = 0;
+        document.getElementById('tableBody').innerHTML = "";
+        chart.data.datasets.forEach(d => d.data = []);
+        chart.update();
+    }
+
+    function downloadCSV() {
+        let csv = "Time,Reactant [A],Product [B],Delta [B]\n";
+        document.querySelectorAll("#tableBody tr").forEach(row => {
+            csv += Array.from(row.querySelectorAll("td")).map(col => col.innerText).join(",") + "\n";
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kinetics_data.csv';
+        a.click();
+    }
+</script>
+
+</body>
+</html>
