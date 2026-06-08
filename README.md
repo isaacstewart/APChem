@@ -18,3 +18,6 @@ Files from my AP Chemistry Class.  Some are tools I have made, others are tools 
      - This was not created using any AI tools - the student hard-coded the entire applet.
   4. [RICE Tables](https://isaacstewart.github.io/APChem/Student/2026/RICE_Tables/index.html)
   5. [Titration Simulator](https://isaacstewart.github.io/APChem/Student/2026/Titration_Simulator/index.html)
+## Student-Created Final Projects Spring 2025
+   1. [Heisenball](https://isaacstewart.github.io/APChem/Student/2025/Heisenball/index.html)
+      -Created by students to simulate the "Snowball" activity done in class to simulate equilibrium under different conditions.
