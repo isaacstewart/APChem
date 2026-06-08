@@ -1,339 +1,214 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equilibrium Lab: Autoionization of Water</title>
+    <title>Equilibrium Lab: Stress & Graphing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg: #f8fafc;
-            --panel: #ffffff;
-            --primary: #2563eb;
-            --water: #38bdf8;
-            --hydronium: #ef4444;
-            --hydroxide: #10b981;
-            --accent: #6366f1;
-            --warning: #f59e0b;
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f4f8; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .lab-bench { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd; }
+        .config-row { grid-column: span 2; display: flex; gap: 20px; background: #eee; padding: 12px; border-radius: 6px; border: 1px solid #ccc; align-items: center; }
+        
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        
+        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; grid-column: span 2; }
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .shake-btn { background: #8e44ad; color: white; }
+        .batch-btn { background: #34495e; color: white; }
+        .stress-btn { background: #e67e22; color: white; }
+        .csv-btn { background: #27ae60; color: white; }
+        .reset-btn { background: #e74c3c; color: white; }
+        button:hover { opacity: 0.8; }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; color: #1e293b; }
-        header { background: var(--primary); color: white; width: 100%; text-align: center; padding: 1.5rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-
-        .container { 
-            display: grid; 
-            grid-template-columns: 280px 500px 320px; 
-            gap: 20px; 
-            padding: 24px; 
-            max-width: 1250px; 
-            width: 100%; 
-            align-items: start;
-        }
-
-        .info-panel, .controls, .graph-panel, .challenge-instr { 
-            background: var(--panel); 
-            padding: 20px; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
-            border: 1px solid #e2e8f0;
-        }
-
-        .info-panel h3, .challenge-instr h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        .info-section { font-size: 0.9rem; line-height: 1.5; margin-bottom: 15px; }
-
-        .challenge-instr { border-left: 5px solid var(--warning); display: none; }
-
-        #sim-canvas { background: #f0f9ff; border: 4px solid #bae6fd; border-radius: 12px; }
-
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; transition: filter 0.3s; }
-        .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; border-bottom: 3px solid var(--primary); }
-        .stat-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
-        .stat-value { font-size: 1.1rem; font-weight: bold; font-family: monospace; }
-
-        .hidden-data { filter: blur(8px); pointer-events: none; opacity: 0.3; }
-        .challenge-box { background: #fffbeb; border: 2px dashed var(--warning); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; display: none; }
-
-        .solution-tag { text-align: center; padding: 8px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-
-        .slider-group { margin: 25px 0; }
-        label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
-        input[type="range"] { width: 100%; cursor: pointer; }
-
-        .graph-container {
-            grid-column: 1 / span 3;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            width: 100%;
-            margin-top: 10px;
-            transition: opacity 0.3s;
-        }
-
-        canvas.graph-canvas { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; }
-
-        button { background: #1e293b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; transition: 0.2s; }
-        button:hover { background: #334155; }
-        .btn-reveal { background: var(--warning); color: #fff; margin-top: 10px; }
-        .btn-reveal:hover { background: #d97706; }
-
-        .toggle-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #eff6ff; border-radius: 8px; font-weight: bold; border: 1px solid #dbeafe; }
-
-        @media (max-width: 1150px) {
-            .container { grid-template-columns: 1fr; }
-            .graph-container { flex-direction: column; align-items: center; }
-        }
+        #graphContainer { margin-top: 20px; height: 350px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: white; display: none; }
+        .table-wrapper { max-height: 250px; overflow-y: auto; border: 1px solid #ddd; margin-top: 20px; border-radius: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #dfe6e9; padding: 8px; text-align: center; font-size: 13px; }
+        th { background-color: #8e44ad; color: white; position: sticky; top: 0; }
+        .a-col { color: #c0392b; font-weight: bold; }
+        .b-col { color: #2980b9; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Equilibrium Lab: Water Autoionization</h1>
-    <p>Practice predicting shifts at the molecular level</p>
-</header>
-
 <div class="container">
-    <div class="info-panel">
-        <h3>How it Works</h3>
-        <div class="info-section"><b>The Equation:</b><br>2H<sub>2</sub>O + heat &rightleftharpoons; H<sub>3</sub>O<sup>+</sup> + OH<sup>&minus;</sup></div>
-        <div class="info-section"><b>Endothermic:</b> Heat is a reactant. Increasing Temp shifts equilibrium <b>right</b>.</div>
-        <div class="info-section"><b>Le Châtelier:</b> Adding ions creates "stress." The system reacts to restore equilibrium.</div>
-    </div>
-
-    <canvas id="sim-canvas" width="500" height="500"></canvas>
-
-    <div id="right-panel-stack">
-        <div class="controls">
-            <div class="toggle-container">
-                <span>Challenge Mode</span>
-                <input type="checkbox" id="challenge-toggle" onchange="toggleChallenge()">
+    <h2>Lab Simulation: Dynamic Equilibrium with Graphs</h2>
+    
+    <div class="lab-bench">
+        <div class="config-row">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="smoothingToggle" style="width:18px; height:18px;">
+                <label for="smoothingToggle" style="margin:0;">Data Smoothing (Use k values)</label>
             </div>
-
-            <div id="challenge-box" class="challenge-box">
-                <strong>Prediction Time!</strong><br>
-                <small>The numbers are hidden. Use the particles to guess the shift.</small>
-                <button class="btn-reveal" onclick="revealData()">Reveal Results</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="graphToggle" onchange="toggleGraph()" style="width:18px; height:18px;">
+                <label for="graphToggle" style="margin:0;">Show Real-Time Graph</label>
             </div>
-
-            <div id="data-panel">
-                <div id="solution-type" class="solution-tag">Neutral Solution</div>
-                <div id="stat-display" class="stat-grid">
-                    <div class="stat-card"><div class="stat-label">pH</div><div id="ph-display" class="stat-value">7.00</div></div>
-                    <div class="stat-card"><div class="stat-label">Temp</div><div class="stat-value"><span id="temp-display">25</span>°C</div></div>
-                    <div class="stat-card"><div class="stat-label">[H₃O⁺]</div><div id="h3o-display" class="stat-value">1.00 &times; 10<sup>-7</sup></div></div>
-                    <div class="stat-card"><div class="stat-label">[OH⁻]</div><div id="oh-display" class="stat-value">1.00 &times; 10<sup>-7</sup></div></div>
-                </div>
-            </div>
-
-            <div class="slider-group">
-                <label>Temperature <span><span id="temp-val">25</span>°C</span></label>
-                <input type="range" id="temp-slider" min="0" max="100" value="25">
-            </div>
-            <div class="slider-group">
-                <label>Acid/Base Stress <span>[HCl] vs [NaOH]</span></label>
-                <input type="range" id="stress-slider" min="-10" max="10" step="0.1" value="0">
-            </div>
-            <button onclick="resetSim()">Reset Simulation</button>
         </div>
 
-        <div id="challenge-instr" class="challenge-instr" style="margin-top: 20px;">
-            <h3>Challenge Guide</h3>
-            <div class="info-section">1. Move a slider.</div>
-            <div class="info-section">2. Look at the <b>speed</b> and <b>color</b> of the particles in the beaker.</div>
-            <div class="info-section">3. Predict if the pH went up or down.</div>
-            <div class="info-section">4. Click <b>Reveal</b> to check your chemistry knowledge!</div>
+        <div>
+            <label>Initial [A]₀:</label>
+            <input type="number" id="totalDice" value="200">
+        </div>
+        <div>
+            <label>System Constant (K):</label>
+            <p style="font-size: 0.8em; color: #666; margin: 0;">Adjust rates to shift equilibrium.</p>
+        </div>
+
+        <div>
+            <label>Forward Rate (A &rarr; B):</label>
+            <select id="forwardRate">
+                <option value="0.5">50% Probability</option>
+                <option value="0.166">16.6% Probability</option>
+            </select>
+        </div>
+        <div>
+            <label>Reverse Rate (B &rarr; A):</label>
+            <select id="reverseRate">
+                <option value="0.5">50% Probability</option>
+                <option value="0.166">16.6% Probability</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button class="shake-btn" onclick="runStep()">Shake Dice</button>
+            <button class="batch-btn" onclick="runBatch(10)">Run 10 Steps</button>
+            <button class="stress-btn" onclick="addStress()">Stress: +100 [A]</button>
+            <button class="csv-btn" onclick="downloadCSV()">Export Data</button>
+            <button class="reset-btn" onclick="resetSim()">Reset Lab</button>
         </div>
     </div>
 
-    <div id="graph-panel-container" class="graph-container">
-        <div class="graph-panel">
-            <h4 style="margin-top:0">Ion Comparison (Log Scale)</h4>
-            <canvas id="bar-graph" class="graph-canvas" width="300" height="200"></canvas>
-        </div>
-        <div class="graph-panel">
-            <h4 style="margin-top:0">pH vs. Temperature</h4>
-            <canvas id="line-graph" class="graph-canvas" width="300" height="200"></canvas>
-        </div>
+    <div id="graphContainer">
+        <canvas id="equilibriumChart"></canvas>
+    </div>
+
+    <div class="table-wrapper" id="scrollContainer">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Tank [A]</th>
+                    <th>Tank [B]</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('sim-canvas');
-    const ctx = canvas.getContext('2d');
-    const barCanvas = document.getElementById('bar-graph');
-    const barCtx = barCanvas.getContext('2d');
-    const lineCanvas = document.getElementById('line-graph');
-    const lineCtx = lineCanvas.getContext('2d');
-    
-    let temp = 25;
-    let Kw = 1e-14;
-    let h3o = 1e-7;
-    let oh = 1e-7;
-    let particles = [];
-    const MAX_PARTICLES = 150;
-    let isChallenging = false;
+    let t = 0, currentA = 0, currentB = 0, stressEvents = [], chart;
 
-    class Particle {
-        constructor(type) {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.type = type; 
-            this.updateVelocity(); 
-            this.radius = type === 'H2O' ? 4 : 7;
-        }
-        updateVelocity() {
-            const speedScale = 0.5 + (temp / 50); 
-            this.vx = (Math.random() - 0.5) * 4 * speedScale;
-            this.vy = (Math.random() - 0.5) * 4 * speedScale;
-        }
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.type === 'H3O' ? '#ef4444' : (this.type === 'OH' ? '#10b981' : '#38bdf8');
-            ctx.fill();
-            ctx.closePath();
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
-        }
+    // Chart Initialization
+    const ctx = document.getElementById('equilibriumChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: '[A]', borderColor: '#c0392b', data: [], fill: false, tension: 0.1 },
+                { label: '[B]', borderColor: '#2980b9', data: [], fill: false, tension: 0.1 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { type: 'linear', title: { display: true, text: 'Steps' } }, y: { min: 0 } }
+        },
+        plugins: [{
+            id: 'stressLines',
+            afterDraw: (chart) => {
+                const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+                stressEvents.forEach(time => {
+                    const xPos = x.getPixelForValue(time);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom);
+                    ctx.lineWidth = 2; ctx.strokeStyle = '#e67e22'; ctx.stroke();
+                    ctx.fillStyle = '#e67e22'; ctx.fillText("STRESS", xPos + 5, top + 15);
+                    ctx.restore();
+                });
+            }
+        }]
+    });
+
+    function toggleGraph() {
+        const show = document.getElementById('graphToggle').checked;
+        document.getElementById('graphContainer').style.display = show ? 'block' : 'none';
+        if(show) chart.update();
     }
 
-    function initParticles() {
-        particles = [];
-        for(let i=0; i < MAX_PARTICLES; i++) particles.push(new Particle('H2O'));
+    function initValues() {
+        currentA = parseInt(document.getElementById('totalDice').value);
+        currentB = 0;
+        updateUI(0, currentA, 0, "Start");
     }
 
-    function toggleChallenge() {
-        isChallenging = document.getElementById('challenge-toggle').checked;
-        const dataPanel = document.getElementById('stat-display');
-        const tag = document.getElementById('solution-type');
-        const graphs = document.getElementById('graph-panel-container');
-        const challengeBox = document.getElementById('challenge-box');
-        const challengeInstr = document.getElementById('challenge-instr');
-
-        if(isChallenging) {
-            dataPanel.classList.add('hidden-data');
-            tag.classList.add('hidden-data');
-            graphs.style.opacity = "0";
-            challengeBox.style.display = "block";
-            challengeInstr.style.display = "block";
-        } else {
-            dataPanel.classList.remove('hidden-data');
-            tag.classList.remove('hidden-data');
-            graphs.style.opacity = "1";
-            challengeBox.style.display = "none";
-            challengeInstr.style.display = "none";
-        }
+    function addStress() {
+        if (t === 0 && chart.data.datasets[0].data.length === 0) initValues();
+        currentA += 100;
+        stressEvents.push(t);
+        updateUI(t, currentA, currentB, "STRESS: Added 100 to [A]");
     }
 
-    function revealData() {
-        document.getElementById('stat-display').classList.remove('hidden-data');
-        document.getElementById('solution-type').classList.remove('hidden-data');
-        document.getElementById('graph-panel-container').style.opacity = "1";
-    }
+    function runBatch(steps) { for (let i = 0; i < steps; i++) runStep(); }
 
-    function formatScientific(num) {
-        const exp = num.toExponential(2);
-        const [mantissa, exponent] = exp.split('e');
-        return `${mantissa} &times; 10<sup>${exponent}</sup>`;
-    }
-
-    function calculateEquilibrium() {
-        let pKw = 14.00 - 0.03 * (temp - 25);
-        Kw = Math.pow(10, -pKw);
-        let stressVal = parseFloat(document.getElementById('stress-slider').value);
-        let Ca = stressVal > 0 ? Math.pow(10, -(11 - stressVal)) : (stressVal < 0 ? -Math.pow(10, -(11 + stressVal)) : 0);
-        let x = (-Ca + Math.sqrt(Math.pow(Ca, 2) + 4 * Kw)) / 2;
-        h3o = x + Ca;
-        oh = x;
-        let ph = -Math.log10(h3o);
-
-        document.getElementById('ph-display').innerText = ph.toFixed(2);
-        document.getElementById('h3o-display').innerHTML = formatScientific(h3o);
-        document.getElementById('oh-display').innerHTML = formatScientific(oh);
-        document.getElementById('temp-display').innerText = temp;
-        document.getElementById('temp-val').innerText = temp;
-
-        updateSolutionTag(ph, pKw);
-        syncParticles();
-        drawGraphs(ph, pKw);
+    function runStep() {
+        if (t === 0 && chart.data.datasets[0].data.length === 0) initValues();
         
-        if(isChallenging) {
-            document.getElementById('stat-display').classList.add('hidden-data');
-            document.getElementById('solution-type').classList.add('hidden-data');
-            document.getElementById('graph-panel-container').style.opacity = "0";
+        const kf = parseFloat(document.getElementById('forwardRate').value);
+        const kr = parseFloat(document.getElementById('reverseRate').value);
+        const smoothed = document.getElementById('smoothingToggle').checked;
+        
+        let aToB = 0, bToA = 0;
+        if (smoothed) {
+            aToB = Math.round(currentA * kf);
+            bToA = Math.round(currentB * kr);
+        } else {
+            for (let i = 0; i < currentA; i++) if (Math.random() < kf) aToB++;
+            for (let i = 0; i < currentB; i++) if (Math.random() < kr) bToA++;
         }
+
+        t++;
+        currentA = currentA - aToB + bToA;
+        currentB = currentB + aToB - bToA;
+        updateUI(t, currentA, currentB, "");
     }
 
-    function updateSolutionTag(ph, pKw) {
-        const tag = document.getElementById('solution-type');
-        const diff = ph - (pKw / 2);
-        if (Math.abs(diff) < 0.05) { tag.innerText = "Neutral"; tag.style.background = "#e2e8f0"; tag.style.color = "#475569"; }
-        else if (diff < 0) { tag.innerText = "Acidic"; tag.style.background = "#fee2e2"; tag.style.color = "#b91c1c"; }
-        else { tag.innerText = "Basic"; tag.style.background = "#dcfce7"; tag.style.color = "#15803d"; }
+    function updateUI(time, a, b, note) {
+        chart.data.datasets[0].data.push({x: time, y: a});
+        chart.data.datasets[1].data.push({x: time, y: b});
+        chart.update('none');
+
+        const tbody = document.getElementById('tableBody');
+        tbody.insertAdjacentHTML('beforeend', `<tr><td>${time}</td><td class="a-col">${a}</td><td class="b-col">${b}</td><td>${note}</td></tr>`);
+        document.getElementById('scrollContainer').scrollTop = document.getElementById('scrollContainer').scrollHeight;
     }
 
-    function syncParticles() {
-        let targetH = Math.max(1, Math.round((Math.log10(h3o) + 14) * 2));
-        let targetOH = Math.max(1, Math.round((Math.log10(oh) + 14) * 2));
-        let cH = particles.filter(p => p.type === 'H3O').length;
-        let cOH = particles.filter(p => p.type === 'OH').length;
-
-        while(cH < targetH) { let p = particles.find(p => p.type === 'H2O'); if(p){p.type='H3O';p.radius=7;cH++;}else break; }
-        while(cH > targetH) { let p = particles.find(p => p.type === 'H3O'); if(p){p.type='H2O';p.radius=4;cH--;}else break; }
-        while(cOH < targetOH) { let p = particles.find(p => p.type === 'H2O'); if(p){p.type='OH';p.radius=7;cOH++;}else break; }
-        while(cOH > targetOH) { let p = particles.find(p => p.type === 'OH'); if(p){p.type='H2O';p.radius=4;cOH--;}else break; }
-    }
-
-    function drawGraphs(currentPh, pKw) {
-        barCtx.clearRect(0,0,300,200);
-        const hHeight = (Math.log10(h3o) + 14) * 10;
-        const oHeight = (Math.log10(oh) + 14) * 10;
-        barCtx.fillStyle = "#ef4444"; barCtx.fillRect(60, 180 - hHeight, 50, hHeight);
-        barCtx.fillStyle = "#10b981"; barCtx.fillRect(190, 180 - oHeight, 50, oHeight);
-        barCtx.fillStyle = "#64748b"; barCtx.fillText("[H3O+]", 65, 195); barCtx.fillText("[OH-]", 200, 195);
-
-        lineCtx.clearRect(0,0,300,200);
-        lineCtx.strokeStyle = "#cbd5e1";
-        lineCtx.beginPath(); lineCtx.moveTo(30,170); lineCtx.lineTo(270,170); lineCtx.stroke();
-        lineCtx.beginPath(); lineCtx.moveTo(30,170); lineCtx.lineTo(30,20); lineCtx.stroke();
-        lineCtx.strokeStyle = "#2563eb";
-        lineCtx.beginPath();
-        for(let t=0; t<=100; t+=5) {
-            let pk = 14.00 - 0.03 * (t - 25);
-            let x = 30 + (t * 2.4);
-            let y = 170 - ((pk/2) * 10);
-            if(t===0) lineCtx.moveTo(x,y); else lineCtx.lineTo(x,y);
-        }
-        lineCtx.stroke();
-        lineCtx.fillStyle = "#000";
-        let curX = 30 + (temp * 2.4); let curY = 170 - (currentPh * 10);
-        lineCtx.beginPath(); lineCtx.arc(curX, curY, 5, 0, Math.PI*2); lineCtx.fill();
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => { p.update(); p.draw(); });
-        requestAnimationFrame(animate);
-    }
-
-    document.getElementById('temp-slider').oninput = function() {
-        temp = parseInt(this.value);
-        particles.forEach(p => p.updateVelocity()); 
-        calculateEquilibrium();
-    };
-    document.getElementById('stress-slider').oninput = calculateEquilibrium;
-    
     function resetSim() {
-        document.getElementById('temp-slider').value = 25;
-        document.getElementById('stress-slider').value = 0;
-        temp = 25; particles.forEach(p => p.updateVelocity());
-        document.getElementById('challenge-toggle').checked = false;
-        toggleChallenge();
-        calculateEquilibrium();
+        t = 0; stressEvents = [];
+        document.getElementById('tableBody').innerHTML = "";
+        chart.data.datasets.forEach(d => d.data = []);
+        chart.update();
     }
 
-    initParticles(); calculateEquilibrium(); animate();
+    function downloadCSV() {
+        let csv = "Step,A,B,Note\n";
+        document.querySelectorAll("#tableBody tr").forEach(row => {
+            csv += Array.from(row.querySelectorAll("td")).map(col => col.innerText).join(",") + "\n";
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'equilibrium_data.csv';
+        a.click();
+    }
 </script>
 </body>
 </html>
