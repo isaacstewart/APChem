@@ -9,7 +9,7 @@ Files from my AP Chemistry Class.  Some are tools I have made, others are tools 
    - Simple app that simulates reaction rates and kinetics by simulating dice rolls for random reactions. Useful for virtual lab data
 2. [Equilibrium Sim with Graph](https://isaacstewart.github.io/APChem/Teacher/Labs/Equilibrium_Lab/index.html)
    - Simple app that simulates equilibrium by simulating dice rolls for random reactions.  Forward rates and reverse rates can be adjusted, and stresses can be added to view Le Châtelier's principle
-3. [Titration Lab](https://isaac.stewart.github.io/APChem/Teacher/Labs/Titration/index.html)
+3. [Titration Lab](https://isaacstewart.github.io/APChem/Teacher/Labs/Titration/index.html)
    - App that allows you to titrate an acid and checks your math on the titration and the initial concentration, as well as the pKa.
 ## Student-Created Final Projects Spring 2026
   1. [Acid-Base Reasoning](https://isaacstewart.github.io/APChem/Student/2026/Acid_Base_Reasoning/index.html)
