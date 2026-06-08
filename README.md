@@ -3,6 +3,7 @@ Files from my AP Chemistry Class.  Some are tools I have made, others are tools 
 ### Tools
 1. [Grouper](https://isaacstewart.github.io/APChem/Teacher/Tools/grouper/index.html)
    - Input rosters and randomize groups of 3 (Board work) or 4 (POGILS)
+   - Should save your class rosters in your browser's cache so you don't have to paste the roster every time.
 ### Labs
 1. [Kinetic Sim With Graph](https://isaacstewart.github.io/APChem/Teacher/Labs/Kinetics_Lab/index.html)
    - Simple app that simulates reaction rates and kinetics by simulating dice rolls for random reactions. Useful for virtual lab data
