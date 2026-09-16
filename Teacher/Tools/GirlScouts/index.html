@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Girl Scout Silver Award Project Bracket</title>
+    <style>
+        :root {
+            --gs-green: #00ae42;
+            --gs-dark-green: #006b28;
+            --gs-light-green: #e6f7ec;
+            --text-color: #333;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f9f5;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--gs-dark-green);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .category-section {
+            background-color: var(--gs-light-green);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--gs-green);
+        }
+
+        .category-section h3 {
+            margin-top: 0;
+            color: var(--gs-dark-green);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--gs-green);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--gs-green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--gs-dark-green);
+        }
+
+        /* Matchup Screen Styles */
+        .progress-container {
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            background-color: var(--gs-green);
+            height: 10px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .matchup-title {
+            text-align: center;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        .matchup-vs {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media(min-width: 500px) {
+            .matchup-vs {
+                flex-direction: row;
+                align-items: center;
+            }
+            .vs-divider { margin: 0 10px; }
+        }
+
+        .choice-btn {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 2px solid #e0e0e0;
+            padding: 25px 20px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+
+        .choice-btn:hover {
+            background-color: var(--gs-light-green);
+            border-color: var(--gs-green);
+            transform: translateY(-2px);
+        }
+
+        .vs-divider {
+            text-align: center;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        /* Results Styles */
+        .results-list {
+            margin-bottom: 25px;
+        }
+        .result-item {
+            background: #f9f9f9;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .result-tag {
+            font-weight: bold;
+            color: var(--gs-dark-green);
+        }
+        .idea-card {
+            background: linear-gradient(135deg, var(--gs-light-green) 0%, #ffffff 100%);
+            border: 2px dashed var(--gs-green);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .idea-card h4 {
+            margin: 0 0 10px 0;
+            color: var(--gs-dark-green);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Silver Award Brainstormer</h1>
+    <p class="subtitle">Discovering your perfect Take Action Project</p>
+
+    <div id="view-input" class="view active">
+        <form id="topics-form" onsubmit="startTournament(event)">
+            <div class="category-section">
+                <h3>1. Your Talents & Skills</h3>
+                <div class="input-group">
+                    <input type="text" required placeholder="e.g., Coding, Drawing">
+                    <input type="text" required placeholder="e.g., Public speaking">
+                    <input type="text" required placeholder="e.g., Organizing things">
+                    <input type="text" required placeholder="e.g., Sports, Cooking">
+                </div>
+            </div>
+
+            <div class="category-section">
+                <h3>2. What You Do For Fun</h3>
+                <div class="input-group">
+                    <input type="text" required placeholder="e.g., Playing video games">
+                    <input type="text" required placeholder="e.g., Reading comic books">
+                    <input type="text" required placeholder="e.g., Being out in nature">
+                    <input type="text" required placeholder="e.g., Making TikToks/videos">
+                </div>
+            </div>
+
+            <div class="category-section">
+                <h3>3. Issues That Bother You</h3>
+                <div class="input-group">
+                    <input type="text" required placeholder="e.g., Ocean plastic pollution">
+                    <input type="text" required placeholder="e.g., Animal shelter crowding">
+                    <input type="text" required placeholder="e.g., Cyberbullying">
+                    <input type="text" required placeholder="e.g., Food insecurity/hunger">
+                </div>
+            </div>
+
+            <div class="category-section">
+                <h3>4. Who You Want To Help</h3>
+                <div class="input-group">
+                    <input type="text" required placeholder="e.g., Elderly neighbors">
+                    <input type="text" required placeholder="e.g., Foster youth">
+                    <input type="text" required placeholder="e.g., Stray animals">
+                    <input type="text" required placeholder="e.g., Elementary school kids">
+                </div>
+            </div>
+
+            <button type="submit">Mix & Generate Bracket</button>
+        </form>
+    </div>
+
+    <div id="view-matchup" class="view">
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="matchup-category" class="matchup-title">Category</div>
+        <div class="matchup-vs">
+            <button id="choice-a" class="choice-btn" onclick="registerVote('A')">Choice A</button>
+            <div class="vs-divider">VS</div>
+            <button id="choice-b" class="choice-btn" onclick="registerVote('B')">Choice B</button>
+        </div>
+    </div>
+
+    <div id="view-results" class="view">
+        <h2>Your Silver Award Matrix</h2>
+        <p>Based on your choices, here are your highest-ranked topics from each category:</p>
+        
+        <div class="results-list" id="winners-list">
+            </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
+        
+        <h3>💡 Top Generated Project Combinations</h3>
+        <p>A great Take Action Project blends your skills/passions with a community need. Try brainstorming around these custom pairings:</p>
+        
+        <div id="combinations-container">
+            </div>
+
+        <button onclick="location.reload()" style="margin-top: 25px; background-color: #666;">Start Over</button>
+    </div>
+</div>
+
+<script>
+    let categories = [
+        { id: 'talents', name: 'Talents & Skills', items: [] },
+        { id: 'fun', name: 'What You Do For Fun', items: [] },
+        { id: 'issues', name: 'Issues to Solve', items: [] },
+        { id: 'help', name: 'Who You Want to Help', items: [] }
+    ];
+
+    let matchups = [];
+    let currentMatchIndex = 0;
+
+    function startTournament(e) {
+        e.preventDefault();
+        const inputs = document.querySelectorAll('#topics-form input[type="text"]');
+        
+        // Populate items
+        let inputIdx = 0;
+        categories.forEach(cat => {
+            cat.items = [];
+            for (let i = 0; i < 4; i++) {
+                cat.items.push({
+                    text: inputs[inputIdx].value.trim(),
+                    score: 0
+                });
+                inputIdx++;
+            }
+        });
+
+        // Generate dynamic Round-Robin pairs for each category to accurately weight choices
+        matchups = [];
+        categories.forEach(cat => {
+            // Generate all unique combinations within the 4 items (6 pairs per category)
+            for (let i = 0; i < 4; i++) {
+                for (let j = i + 1; j < 4; j++) {
+                    matchups.push({
+                        catId: cat.id,
+                        catName: cat.name,
+                        indexA: i,
+                        indexB: j
+                    });
+                }
+            }
+        });
+
+        // Completely shuffle matchups so she cannot guess patterns or rely on context clues
+        matchups.sort(() => Math.random() - 0.5);
+
+        currentMatchIndex = 0;
+        switchView('view-matchup');
+        renderMatchup();
+    }
+
+    function renderMatchup() {
+        if (currentMatchIndex >= matchups.length) {
+            showResults();
+            return;
+        }
+
+        // Update progress bar
+        const progressPercent = (currentMatchIndex / matchups.length) * 100;
+        document.getElementById('progress-bar').style.width = progressPercent + '%';
+
+        const match = matchups[currentMatchIndex];
+        const cat = categories.find(c => c.id === match.catId);
+        
+        document.getElementById('matchup-category').innerText = `Which of these appeals to you more right now?`;
+        
+        // Randomize left vs right placement to avoid alignment bias
+        if (Math.random() > 0.5) {
+            document.getElementById('choice-a').innerText = cat.items[match.indexA].text;
+            document.getElementById('choice-a').setAttribute('data-item-idx', match.indexA);
+            document.getElementById('choice-b').innerText = cat.items[match.indexB].text;
+            document.getElementById('choice-b').setAttribute('data-item-idx', match.indexB);
+        } else {
+            document.getElementById('choice-a').innerText = cat.items[match.indexB].text;
+            document.getElementById('choice-a').setAttribute('data-item-idx', match.indexB);
+            document.getElementById('choice-b').innerText = cat.items[match.indexA].text;
+            document.getElementById('choice-b').setAttribute('data-item-idx', match.indexA);
+        }
+    }
+
+    function registerVote(side) {
+        const match = matchups[currentMatchIndex];
+        const cat = categories.find(c => c.id === match.catId);
+        const buttonId = side === 'A' ? 'choice-a' : 'choice-b';
+        const chosenIdx = parseInt(document.getElementById(buttonId).getAttribute('data-item-idx'));
+
+        // Award point to the winning selection
+        cat.items[chosenIdx].score += 1;
+
+        currentMatchIndex++;
+        renderMatchup();
+    }
+
+    function showResults() {
+        switchView('view-results');
+        
+        const winnersList = document.getElementById('winners-list');
+        winnersList.innerHTML = '';
+
+        // Find the top item for each category
+        let winners = {};
+        categories.forEach(cat => {
+            // Sort by score descending
+            cat.items.sort((a, b) => b.score - a.score);
+            const topChoice = cat.items[0].text;
+            winners[cat.id] = topChoice;
+
+            winnersList.innerHTML += `
+                <div class="result-item">
+                    <span class="result-tag">${cat.name}:</span>
+                    <span>${topChoice}</span>
+                </div>
+            `;
+        });
+
+        // Formulate actionable combos by matching internal passions with external problems
+        const comboContainer = document.getElementById('combinations-container');
+        comboContainer.innerHTML = `
+            <div class="idea-card">
+                <h4>Option A: The Passion Project</h4>
+                <p>Use your talent for <strong>"${winners['talents']}"</strong> to address the issue of <strong>"${winners['issues']}"</strong> for <strong>"${winners['help']}"</strong>.</p>
+            </div>
+            <div class="idea-card">
+                <h4>Option B: The Fun Approach</h4>
+                <p>Turn your love of <strong>"${winners['fun']}"</strong> into a sustainable solution for <strong>"${winners['issues']}"</strong> impacting <strong>"${winners['help']}"</strong>.</p>
+            </div>
+            <div class="idea-card">
+                <h4>Option C: The Double-Threat</h4>
+                <p>Combine <strong>"${winners['talents']}"</strong> and <strong>"${winners['fun']}"</strong> together to uniquely serve <strong>"${winners['help']}"</strong>.</p>
+            </div>
+        `;
+    }
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    }
+</script>
+
+</body>
+</html>
