@@ -4,6 +4,9 @@ Files from my AP Chemistry Class.  Some are tools I have made, others are tools 
 1. [Grouper](https://isaacstewart.github.io/APChem/Teacher/Tools/grouper/index.html)
    - Input rosters and randomize groups of 3 (Board work) or 4 (POGILS)
    - Should save your class rosters in your browser's cache so you don't have to paste the roster every time.
+2. [Silver Award Decision Bracket] (https://isaacstewart.github.io/APChem/Teacher/Tools/GirlScouts/index.html)
+   - Random decision bracket for developing ideas for a Girl Scouts Silver Award Bracket
+   - My daughter was working on her Silver award and was trying to do this manually but due to bias was ending up with a project that didn't really seem viable or something that interested her.  The bracket takes inputs and then has you rank like a basketball tournament comparisons of 4 different ideas for different interests and combines the top winners of all categories into an idea for a silver award project.
 ### Labs
 1. [Kinetic Sim With Graph](https://isaacstewart.github.io/APChem/Teacher/Labs/Kinetics_Lab/index.html)
    - Simple app that simulates reaction rates and kinetics by simulating dice rolls for random reactions. Useful for virtual lab data
